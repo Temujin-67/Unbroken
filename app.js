@@ -1,6 +1,3 @@
-Here's the complete file — select everything in `app.js` on GitHub, delete it, and paste this in its place:
-
-```javascript
 (function () {
   "use strict";
 
@@ -603,4 +600,4 @@ Here's the complete file — select everything in `app.js` on GitHub, delete it,
 })();
 ```
 
-Commit it, then test again in a private tab.
+Paste that in, commit, then test in a fresh private tab — check the Today tab first before touching Companion.
