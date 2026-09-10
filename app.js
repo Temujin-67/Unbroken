@@ -539,12 +539,10 @@
     var log = document.getElementById("chatLog");
     var placeholder = log.lastChild;
 
-    fetch("https://api.anthropic.com/v1/messages", {
+       fetch(cfg.supabaseUrl + "/functions/v1/companion-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 400,
         system: COMPANION_SYSTEM_PROMPT + "\n\n" + buildDynamicContext(),
         messages: chatHistory
       })
