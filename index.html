@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>Unbroken</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="app">
+
+    <div class="onboard-overlay hidden" id="onboardOverlay">
+      <div class="onboard-card">
+        <p class="onboard-title">One quick question</p>
+        <p class="onboard-body">Does this involve children you share with them?</p>
+        <div class="onboard-actions">
+          <button class="btn-ghost" id="onboardNoBtn">No</button>
+          <button class="btn-primary" id="onboardYesBtn">Yes</button>
+        </div>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <span class="wordmark">Unbroken</span>
+      <span class="day-pill" id="dayPill">Day 1</span>
+    </header>
+
+    <main id="views">
+
+      <!-- TODAY -->
+      <section class="view" id="view-today" data-view="today">
+        <p class="eyebrow" id="techniqueLabel">Dichotomy of Control</p>
+        <h1 class="reframe-title" id="reframeTitle">Loading…</h1>
+        <p class="reframe-lesson" id="reframeLesson"></p>
+        <p class="reframe-context hidden" id="reframeContext"></p>
+        <div class="action-card">
+          <p class="action-label">Today's move</p>
+          <p class="action-text" id="reframeAction"></p>
+          <button class="btn-primary" id="doneTodayBtn">Mark done</button>
+        </div>
+      </section>
+
+      <!-- TRACKER -->
+      <section class="view hidden" id="view-tracker" data-view="tracker">
+        <p class="eyebrow">No-contact</p>
+        <div class="streak-block">
+          <span class="streak-number" id="streakNumber">0</span>
+          <span class="streak-unit">days</span>
+        </div>
+        <p class="streak-sub" id="longestStreak">Longest streak: 0 days</p>
+
+        <div class="tracker-actions">
+          <button class="btn-ghost" id="urgeBtn">I want to reach out</button>
+          <button class="btn-danger" id="resetBtn">I reached out</button>
+        </div>
+
+        <div class="urge-log">
+          <p class="urge-log-title">Logged urges today</p>
+          <p class="urge-count" id="urgeCount">0</p>
+          <p class="urge-hint">Every urge you log instead of act on is the streak holding.</p>
+        </div>
+
+        <div class="reset-message hidden" id="resetMessage">
+          <p class="reset-message-text">The streak reset. That is data, not a verdict. A mistake is training, not proof of failure. The count starts again now, not tomorrow.</p>
+        </div>
+
+        <div class="view-above hidden" id="viewAbove">
+          <p class="eyebrow">View from above</p>
+          <div class="stat-row"><span class="stat-label">Days on the path</span><span class="stat-value" id="statDays">0</span></div>
+          <div class="stat-row"><span class="stat-label">Longest streak</span><span class="stat-value" id="statLongest">0</span></div>
+          <div class="stat-row"><span class="stat-label">Urges logged, not acted on</span><span class="stat-value" id="statUrges">0</span></div>
+          <div class="stat-row"><span class="stat-label">Times reset</span><span class="stat-value" id="statResets">0</span></div>
+          <div class="stat-row"><span class="stat-label">Journal entries written</span><span class="stat-value" id="statEntries">0</span></div>
+          <p class="review-intro">Up close, a hard week looks like failure. From here, it is one entry in a longer record you are still writing.</p>
+        </div>
+        <button class="btn-ghost" id="toggleAboveBtn">View from above</button>
+      </section>
+
+      <!-- JOURNAL -->
+      <section class="view hidden" id="view-journal" data-view="journal">
+        <p class="eyebrow">Journal</p>
+        <button class="btn-ghost" id="toggleHistoryBtn">Read past entries</button>
+        <div class="history-panel hidden" id="historyPanel">
+          <div id="historyList"></div>
+          <p class="history-empty hidden" id="historyEmpty">Nothing written yet.</p>
+        </div>
+
+        <p class="journal-prompt" id="journalPrompt">What are you carrying today that isn't yours to carry?</p>
+        <textarea id="journalEntry" placeholder="Write here. No one grades this."></textarea>
+        <button class="btn-primary" id="saveJournalBtn">Save entry</button>
+        <div id="journalSaved" class="saved-note hidden">Saved.</div>
+
+        <div class="recap-block">
+          <p class="eyebrow">Evening recap</p>
+
+          <p class="recap-label">A small win today</p>
+          <textarea id="recapWin" class="recap-input" placeholder="One thing you did today that held the line — however small."></textarea>
+
+          <p class="recap-label">What you'd do differently</p>
+          <textarea id="recapWish" class="recap-input" placeholder="No self-punishment. Just the fact of it."></textarea>
+
+          <button class="btn-primary" id="saveRecapBtn">Save today's recap</button>
+          <div id="recapSaved" class="saved-note hidden">Saved.</div>
+
+          <p class="recap-reminder">The path is the goal, not the finish line. A mistake is training, not proof of failure. Do not punish yourself for it. Return to the path.</p>
+        </div>
+
+        <div class="recap-block">
+          <p class="eyebrow">Relationship review</p>
+          <p class="review-intro">This is not to build a case against them, and not to find a way back. It is to see clearly. Marcus Aurelius did not ask himself to be soft. He asked himself to be honest, then kind, then firm — in that order.</p>
+
+          <p class="recap-label">What did they do that you genuinely valued?</p>
+          <textarea id="reviewValued" class="recap-input" placeholder="Be accurate, not generous. Name what was real."></textarea>
+
+          <p class="recap-label">What did they do that crossed a line or wore you down?</p>
+          <textarea id="reviewCrossed" class="recap-input" placeholder="State it plainly. This is not complaining — it is recording a fact."></textarea>
+
+          <p class="recap-label">Where did you let something go that you shouldn't have?</p>
+          <textarea id="reviewAllowed" class="recap-input" placeholder="This one is about you, not them."></textarea>
+
+          <p class="recap-label">Where did you compromise your own standard to keep the peace?</p>
+          <textarea id="reviewCompromised" class="recap-input" placeholder="Honesty here is for you, not for a verdict on them."></textarea>
+
+          <p class="recap-label">If this pattern shows up again, what is now a clear line?</p>
+          <textarea id="reviewLine" class="recap-input" placeholder="Not a rule to punish someone else. A standard you hold."></textarea>
+
+          <button class="btn-primary" id="saveReviewBtn">Save review</button>
+          <div id="reviewSaved" class="saved-note hidden">Saved.</div>
+
+          <p class="recap-reminder">Understanding them is not the same as excusing what hurt you. Being honest is not the same as being cruel, to them or to yourself. Stay accurate, stay kind, and do not mistake either one for being a pushover.</p>
+        </div>
+      </section>
+
+      <!-- RIGHT NOW -->
+      <section class="view hidden" id="view-rightnow" data-view="rightnow">
+        <p class="eyebrow">Right now</p>
+        <p class="rightnow-intro">Tap what you're feeling. Get something short and specific, not a breathing exercise.</p>
+
+        <p class="group-label">Urges</p>
+        <div class="trigger-grid" id="triggerGridUrge"></div>
+
+        <p class="group-label">Body</p>
+        <div class="trigger-grid" id="triggerGridBody"></div>
+
+        <p class="group-label">Practical, high-stakes</p>
+        <div class="trigger-grid" id="triggerGridPractical"></div>
+
+        <p class="group-label">If they reach out</p>
+        <div class="trigger-grid" id="triggerGridContact"></div>
+
+        <p class="group-label">Family &amp; friends</p>
+        <div class="trigger-grid" id="triggerGridCircle"></div>
+
+        <div class="rightnow-response hidden" id="rightnowResponse">
+          <p class="rightnow-response-text" id="rightnowResponseText"></p>
+          <p class="action-label">Do this</p>
+          <p class="action-text" id="rightnowActionText"></p>
+        </div>
+      </section>
+
+      <!-- COMPANION -->
+      <section class="view hidden" id="view-companion" data-view="companion">
+        <p class="eyebrow">Companion</p>
+        <div class="chat-log" id="chatLog">
+          <div class="chat-bubble bot">I'm here. What's going on right now?</div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" placeholder="Say what's happening…" />
+          <button class="btn-primary chat-send" id="chatSendBtn">Send</button>
+        </div>
+      </section>
+
+    </main>
+
+    <nav class="tabbar">
+      <button class="tab active" data-target="today">Today</button>
+      <button class="tab" data-target="tracker">Tracker</button>
+      <button class="tab" data-target="rightnow">Right Now</button>
+      <button class="tab" data-target="journal">Journal</button>
+      <button class="tab" data-target="companion">Companion</button>
+    </nav>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

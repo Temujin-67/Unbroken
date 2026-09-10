@@ -1,0 +1,198 @@
+[
+  {
+    "id": "text",
+    "label": "I want to text them",
+    "group": "urge",
+    "response": "You are not deciding whether to text. You are deciding whether to feel the urge without acting on it. The urge will pass in minutes whether you text or not. Acting on it only resets your progress.",
+    "action": "Log the urge in your tracker instead of opening the chat. Put your phone in another room for ten minutes."
+  },
+  {
+    "id": "overanalyzing",
+    "label": "I'm overanalyzing their last message",
+    "group": "urge",
+    "response": "Their words cannot be solved like a puzzle. There is no hidden meaning that will make this hurt less. Rereading it is not understanding it. It is just staying in contact with the pain.",
+    "action": "Close the conversation. Do not reopen it today. Write down what you are actually afraid it means, then put the notebook away."
+  },
+  {
+    "id": "replaying",
+    "label": "I keep replaying our conversations",
+    "group": "urge",
+    "response": "You are not remembering. You are rehearsing. Rehearsing a scene does not change how it ended. It only keeps you in it.",
+    "action": "Name the memory once, out loud or in writing. Then do a physical task with your hands for five minutes: wash dishes, walk, stretch."
+  },
+  {
+    "id": "revenge",
+    "label": "I want to sleep with someone to prove something",
+    "group": "urge",
+    "response": "This is not desire. It is an attempt to make someone else feel what you feel, or to prove you are still wanted. Neither works. You will still wake up in the same place tomorrow.",
+    "action": "Wait 24 hours before acting on this. If you still want to after 24 hours, that is a different decision than the one you are making right now."
+  },
+  {
+    "id": "jealousy",
+    "label": "I'm jealous, imagining them with someone else",
+    "group": "urge",
+    "response": "You are picturing a scene you did not witness and cannot control. Whether it is true or not, picturing it changes nothing except your own state right now.",
+    "action": "Name what you are imagining in one sentence. Then ask: does thinking about this again change anything I can act on? If no, set it down."
+  },
+  {
+    "id": "anger",
+    "label": "I'm furious at them",
+    "group": "urge",
+    "response": "Anger says something was violated. It does not need to be acted on to be real. Sending it to them will not settle it. It will only restart the loop.",
+    "action": "Write exactly what you are angry about, one sentence. Then close the notebook. Do not send it to them."
+  },
+  {
+    "id": "guilt",
+    "label": "I feel like it's my fault",
+    "group": "urge",
+    "response": "Believing it was entirely your fault gives you a strange kind of control — if it was your fault, you could have prevented it. Most relationships end for many reasons, and not all of them were in your hands.",
+    "action": "Write one thing you did well in the relationship, plainly, without a 'but' after it."
+  },
+  {
+    "id": "lonely",
+    "label": "I just feel alone",
+    "group": "urge",
+    "response": "You may not be missing them right now. You may be noticing you are alone. Those are different problems, and only one of them is about the relationship.",
+    "action": "Do one thing today that puts you near another person, even briefly — a call, a coffee, a walk with someone."
+  },
+  {
+    "id": "social",
+    "label": "I saw them on social media",
+    "group": "urge",
+    "response": "What you saw was one moment, not a summary of their life. You do not know what it means. Studying it will not tell you.",
+    "action": "Close the app now. If this keeps happening, mute or unfollow. That is not weakness. It is removing input you do not need."
+  },
+  {
+    "id": "date",
+    "label": "Today is a hard date (birthday, anniversary, holiday)",
+    "group": "urge",
+    "response": "This date will pass whether you resist it or not. Today is difficult because of what it marks, not because you are failing at this.",
+    "action": "Plan something for today in advance, even something small. Do not leave the day empty."
+  },
+  {
+    "id": "numb",
+    "label": "I feel nothing, numb",
+    "group": "urge",
+    "response": "Numbness is not the absence of grief. It is grief with the volume turned down because you have been running on it too long. It will not stay this way.",
+    "action": "Do not chase a feeling to prove something is wrong. Do one ordinary task today. That is enough."
+  },
+  {
+    "id": "latenight",
+    "label": "It's late and I'm spiraling",
+    "group": "urge",
+    "response": "At night the mind edits nothing out. Everything looks larger than it will look at nine tomorrow morning. This is a known effect, not a special truth arriving to you specifically.",
+    "action": "Decide nothing tonight. Write the thought down, close the notebook, and go back to bed. Revisit it after sunrise, not before."
+  },
+  {
+    "id": "leftregret",
+    "label": "I ended it and now I regret it",
+    "group": "urge",
+    "response": "Ending it does not mean you were wrong. It means, at the time, staying looked worse than leaving. That reasoning was yours, based on what you knew then.",
+    "action": "Write the actual reason you ended it, in one sentence, using only what you knew at the time — not what you know now."
+  },
+  {
+    "id": "comparing_new",
+    "label": "I keep comparing myself to who they're with now",
+    "group": "urge",
+    "response": "You are comparing your unfiltered grief to their filtered outside. That was never going to be a fair measurement.",
+    "action": "Name what you are actually comparing. Then ask if it is a real comparison, or just two different distances from a camera."
+  },
+  {
+    "id": "new_partner",
+    "label": "I found out they have someone new",
+    "group": "urge",
+    "response": "This confirms a fact, not a judgment on you. Someone moving on says something about them. It is not a ranking of you against another person.",
+    "action": "Feel it once, fully, today. Do not build a story about what it means about your worth."
+  },
+  {
+    "id": "memory_resurface",
+    "label": "An app just showed me an old photo or memory",
+    "group": "urge",
+    "response": "The app does not know your life changed. It is a machine surfacing a date, not sending you a message.",
+    "action": "Close it. If this keeps happening, turn off memory notifications for that app. That is maintenance, not avoidance."
+  },
+  {
+    "id": "family_pressure",
+    "label": "My family keeps asking about it or taking sides",
+    "group": "circle",
+    "response": "Their concern may be real. Their opinion of your timeline is still not a fact about your timeline. You do not owe a full report to prove you are handling it.",
+    "action": "Decide one short answer you are comfortable giving, and use it every time, regardless of who is asking."
+  },
+  {
+    "id": "friends_divided",
+    "label": "Our friend group feels awkward or divided",
+    "group": "circle",
+    "response": "A shared friend group rarely survives a breakup unchanged. That is a separate loss from the relationship itself, and it is allowed to hurt on its own.",
+    "action": "Name which friendships you actually want to keep. Put your effort there, not into managing the whole group."
+  },
+  {
+    "id": "friend_brings_up",
+    "label": "A mutual friend keeps bringing them up",
+    "group": "circle",
+    "response": "They may not know it lands differently for you than it does for them. You are allowed to say so plainly.",
+    "action": "Tell them directly: 'I'd rather not hear updates about them right now.' That is a reasonable request, not an overreaction."
+  },
+  {
+    "id": "sleep",
+    "label": "I can't sleep",
+    "group": "body",
+    "response": "Grief keeps the body on alert. Poor sleep is common right now, not a personal failure.",
+    "action": "Keep the same wake time even after a bad night. If this continues most nights for more than two weeks, tell a doctor. That is a medical conversation, not a weakness."
+  },
+  {
+    "id": "eating",
+    "label": "I'm not eating properly",
+    "group": "body",
+    "response": "Appetite changes under stress. This is common and usually temporary.",
+    "action": "Eat something small and regular even without hunger, three times today. If this continues for weeks, or you notice a real pattern of restricting or bingeing, talk to a doctor. That is worth taking seriously, not pushing through alone."
+  },
+  {
+    "id": "smoking",
+    "label": "I'm smoking more",
+    "group": "body",
+    "response": "Stress reaches for whatever is familiar. Noticing the increase is already useful information.",
+    "action": "You do not have to fix this today. Just notice the count for one day, without judging it. Decide tomorrow, not right now."
+  },
+  {
+    "id": "home",
+    "label": "I might lose my home",
+    "group": "practical",
+    "response": "This is a real, practical problem. Stoic reframing can help you stay steady while you deal with it. It cannot replace dealing with it.",
+    "action": "This needs a lawyer or housing advisor familiar with your jurisdiction, not an app. If you do not have one yet, that is the next concrete step, not a feeling to manage."
+  },
+  {
+    "id": "kids",
+    "label": "I'm worried about access to my kids",
+    "group": "practical",
+    "response": "This is one of the highest-stakes parts of a breakup, and it deserves real expertise, not a daily lesson. This app will not guess at custody, legal rights, or what is best for your child — that is not a risk worth taking with something this serious.",
+    "action": "Speak to a family lawyer or mediator about your specific situation and jurisdiction as soon as you can. If you have any concern about how your child is coping emotionally, a pediatrician or child psychologist is the right person to involve too — not this app. Staying calm and documented in the meantime is something Stoic practice can genuinely help with, but it supports that process. It does not replace it."
+  },
+  {
+    "id": "money",
+    "label": "I'm worried about money",
+    "group": "practical",
+    "response": "Financial fear after a breakup is common and often underestimated by people around you.",
+    "action": "Get a clear, written picture of your actual numbers — accounts, debts, shared assets — even if it's frightening to look. A financial advisor or lawyer can help you separate what's urgent from what's just loud."
+  },
+  {
+    "id": "reached_out",
+    "label": "They just messaged me",
+    "group": "contact",
+    "response": "You do not owe a full reply. A short, clear response is not cold — it is controlled. Over-explaining invites more conversation, not less.",
+    "action": "Keep any reply brief and factual. No apology you don't mean, no crying in the message, no threats, no reopening old arguments. If you don't have to reply now, wait."
+  },
+  {
+    "id": "meet_up",
+    "label": "They want to meet up",
+    "group": "contact",
+    "response": "Meeting does not have to happen on their timeline. Saying no, or not yet, is a complete answer.",
+    "action": "If you agree to meet, decide the reason and a time limit before you go. If you cannot name a clear reason, that is your answer already."
+  },
+  {
+    "id": "hostile",
+    "label": "They're being cold or hostile",
+    "group": "contact",
+    "response": "Their tone is information about them, not a test you have to pass. Matching it keeps you both in it longer.",
+    "action": "Reply once, plainly, without matching their tone. Then stop responding for the day."
+  }
+]
