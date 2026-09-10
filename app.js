@@ -1,4 +1,3 @@
-```javascript
 (function () {
   "use strict";
 
@@ -597,6 +596,3 @@
   });
 
 })();
-```
-
-Once you've replaced the content of `app.js` on GitHub with this and committed it, give it a minute, then reload `https://temujin-67.github.io/Unbroken/`.
