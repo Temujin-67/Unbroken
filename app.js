@@ -190,7 +190,7 @@
   });
 
   document.getElementById("resetBtn").addEventListener("click", function () {
-    var ok = window.confirm("Log that you reached out? This isn't a scorecard — sometimes contact is necessary or fine. This just resets the streak count to reflect that.");
+    var ok = window.confirm("Log that you reached out? This resets the streak count.");
     if (!ok) return;
     state.lastResetDate = todayKey;
     state.resetCount += 1;
