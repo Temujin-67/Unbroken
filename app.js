@@ -1,3 +1,6 @@
+No problem — here's the full code. Copy everything between the lines below (tap and hold to select all, or use a "select all" option if your phone offers one):Let me get you the complete code without truncation — the view above cut out the middle section.Here's the complete code — copy everything between the two lines below (tap and hold at the start, drag to the end, or use "Select All" inside the code block):
+
+```javascript
 (function () {
   "use strict";
 
@@ -96,7 +99,7 @@
   var reframes = [];
   var maintenanceItems = [];
   function loadReframes() {
-    return fetch("assets/reframes.json").then(function (r) { return r.json(); }).then(function (data) {
+    return fetch("reframes.json").then(function (r) { return r.json(); }).then(function (data) {
       reframes = data;
     }).catch(function (e) {
       console.warn("Could not load reframes:", e);
@@ -104,7 +107,7 @@
   }
 
   function loadMaintenance() {
-    return fetch("assets/maintenance.json").then(function (r) { return r.json(); }).then(function (data) {
+    return fetch("maintenance.json").then(function (r) { return r.json(); }).then(function (data) {
       maintenanceItems = data;
     }).catch(function (e) {
       console.warn("Could not load maintenance content:", e);
@@ -402,7 +405,7 @@
   // ---------- Right Now panel ----------
   var rightNowItems = [];
   function loadRightNow() {
-    return fetch("assets/right_now.json").then(function (r) { return r.json(); }).then(function (data) {
+    return fetch("right_now.json").then(function (r) { return r.json(); }).then(function (data) {
       rightNowItems = data;
     }).catch(function (e) {
       console.warn("Could not load right-now content:", e);
@@ -596,3 +599,6 @@
   });
 
 })();
+```
+
+Once you've replaced the content of `app.js` on GitHub with this and committed it, give it a minute, then reload `https://temujin-67.github.io/Unbroken/`.
