@@ -48,6 +48,8 @@
       longestStreak: parseInt(localStorage.getItem("unbroken_longest_streak") || "0", 10),
       urgesDate: localStorage.getItem("unbroken_urges_date"),
       urgesCount: parseInt(localStorage.getItem("unbroken_urges_count") || "0", 10),
+      chatDate: localStorage.getItem("unbroken_chat_date"),
+      chatCount: parseInt(localStorage.getItem("unbroken_chat_count") || "0", 10),
       totalUrges: parseInt(localStorage.getItem("unbroken_total_urges") || "0", 10),
       resetCount: parseInt(localStorage.getItem("unbroken_reset_count") || "0", 10),
       doneDates: JSON.parse(localStorage.getItem("unbroken_done_dates") || "[]")
@@ -69,6 +71,16 @@
     localStorage.setItem("unbroken_urges_count", "0");
     localStorage.setItem("unbroken_urges_date", todayKey);
   }
+
+  // reset chat counter if it's a new day
+  if (state.chatDate !== todayKey) {
+    state.chatCount = 0;
+    state.chatDate = todayKey;
+    localStorage.setItem("unbroken_chat_count", "0");
+    localStorage.setItem("unbroken_chat_date", todayKey);
+  }
+
+  var DAILY_CHAT_LIMIT = 25;
 
   function computeStreak() {
     var base = state.lastResetDate || state.startDate;
@@ -601,14 +613,23 @@
     var input = document.getElementById("chatInput");
     var text = input.value.trim();
     if (!text) return;
+
     appendBubble(text, "user");
     input.value = "";
-    saveChatMessage("user", text);
 
     if (CRISIS_PATTERN.test(text)) {
       appendBubble(CRISIS_MESSAGE, "crisis");
       return;
     }
+
+    if (state.chatCount >= DAILY_CHAT_LIMIT) {
+      appendBubble("This can wait. Come back tomorrow — the Companion picks up again then.", "bot");
+      return;
+    }
+
+    saveChatMessage("user", text);
+    state.chatCount += 1;
+    localStorage.setItem("unbroken_chat_count", String(state.chatCount));
 
     chatHistory.push({ role: "user", content: text });
     appendBubble("…", "bot");
