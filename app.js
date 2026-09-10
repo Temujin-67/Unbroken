@@ -600,4 +600,4 @@
 })();
 ```
 
-Paste that in, commit, then test in a fresh private tab — check the Today tab first before touching Companion.
+
