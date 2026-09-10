@@ -152,6 +152,10 @@
       doneBtn.textContent = "Mark done";
       doneBtn.disabled = false;
     }
+
+    var notes = JSON.parse(localStorage.getItem("unbroken_today_notes") || "{}");
+    var noteBox = document.getElementById("todayNote");
+    if (noteBox) noteBox.value = notes[todayKey] ? notes[todayKey].text : "";
   }
 
   document.getElementById("doneTodayBtn").addEventListener("click", function () {
@@ -160,6 +164,28 @@
       localStorage.setItem("unbroken_done_dates", JSON.stringify(state.doneDates));
     }
     renderToday();
+  });
+
+  document.getElementById("saveTodayNoteBtn").addEventListener("click", function () {
+    var text = document.getElementById("todayNote").value.trim();
+    if (!text) return;
+    var title = document.getElementById("reframeTitle").textContent;
+
+    var notes = JSON.parse(localStorage.getItem("unbroken_today_notes") || "{}");
+    notes[todayKey] = { title: title, text: text, created_at: new Date().toISOString() };
+    localStorage.setItem("unbroken_today_notes", JSON.stringify(notes));
+
+    if (supabase && currentUserId) {
+      supabase.from("journal_entries").insert({
+        user_id: currentUserId, prompt: "Today's move — " + title, entry: text
+      }).then(function (res) {
+        if (res.error) console.warn("Today note sync failed:", res.error.message);
+      });
+    }
+
+    var saved = document.getElementById("todayNoteSaved");
+    saved.classList.remove("hidden");
+    setTimeout(function () { saved.classList.add("hidden"); }, 2000);
   });
 
   // ---------- Tracker ----------
@@ -282,6 +308,7 @@
     var journal = JSON.parse(localStorage.getItem("unbroken_journal") || "[]");
     var recaps = JSON.parse(localStorage.getItem("unbroken_recaps") || "[]");
     var reviews = JSON.parse(localStorage.getItem("unbroken_reviews") || "[]");
+    var todayNotes = JSON.parse(localStorage.getItem("unbroken_today_notes") || "{}");
 
     var all = [];
 
@@ -296,6 +323,11 @@
 
     reviews.forEach(function (e) {
       all.push({ label: e.prompt, text: e.entry, date: e.created_at });
+    });
+
+    Object.keys(todayNotes).forEach(function (dateKey) {
+      var n = todayNotes[dateKey];
+      all.push({ label: "Today's move — " + n.title, text: n.text, date: n.created_at });
     });
 
     all.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
