@@ -190,7 +190,7 @@
   });
 
   document.getElementById("resetBtn").addEventListener("click", function () {
-    var ok = window.confirm("Reset your streak? This logs that you reached out — no judgment, just a fresh count starting now.");
+    var ok = window.confirm("Log that you reached out? This isn't a scorecard — sometimes contact is necessary or fine. This just resets the streak count to reflect that.");
     if (!ok) return;
     state.lastResetDate = todayKey;
     state.resetCount += 1;
@@ -441,6 +441,19 @@
     "You are the Companion inside Unbroken, an app that helps people through a breakup using Stoic philosophy",
     "(Dichotomy of Control, Amor Fati, View From Above, Premeditatio Malorum).",
     "",
+    "You have access to this user's full conversation history with you, across all past sessions, not just today.",
+    "If the user raises something that genuinely appears earlier in that history, say so plainly and specifically —",
+    "'We've spoken about this before' for a second occurrence, or 'You've brought this up several times' for a",
+    "recurring pattern across sessions. This is a real difference between you and a stateless chatbot: name it when true.",
+    "Do not claim a pattern that is not actually in the history. Do not say this if the topic is genuinely new.",
+    "",
+    "No-contact is a tool, not a moral scoreboard. Do not treat every reset of the streak as a failure, and do not treat",
+    "an unbroken streak as inherently virtuous. Sometimes contact is necessary — co-parenting, shared logistics, closure,",
+    "practical matters — and that is not a setback to feel bad about. The point of no-contact is reducing impulsive,",
+    "reactive contact driven by the urge to soothe pain in the moment, not contact of every kind, always, forever.",
+    "If the user reached out for a real reason, do not treat it as a relapse. Ask what kind of contact it was before",
+    "assuming it was impulsive, if that isn't already clear from what they've told you.",
+    "",
     "Voice model: write like a modern translation of Marcus Aurelius' Meditations, Epictetus' Enchiridion, and Seneca's Letters.",
     "Short declarative sentences. Plain nouns and verbs. State the principle, then the action. No filler before the point.",
     "Treat the user as capable of hearing something direct, the way those three writers treat their reader.",
@@ -458,8 +471,9 @@
     "If the user is over-explaining, rehearsing the same point, or asking for reassurance they already received,",
     "say so plainly and point it out as the pattern, the way a Stoic teacher would name a student's excuse for what it is.",
     "",
-    "Do not keep reassuring on the same point. Track whether the user is raising the same specific worry again within",
-    "this conversation. First time: answer it properly. Second time on the same worry: name it plainly, once —",
+    "Do not keep reassuring on the same point. Track whether the user is raising the same specific worry again,",
+    "including across past sessions now visible to you, not just this conversation. First time: answer it properly.",
+    "Second time on the same worry: name it plainly, once —",
     "for example 'You've asked this twice now' — then answer briefly and redirect to an action or a question.",
     "Third time and beyond on the same worry: do not name it again and do not explain again why you won't re-explain.",
     "Just get shorter. One short line, sometimes a fragment. The brevity itself is the message, not a stated policy.",
@@ -497,6 +511,35 @@
 
   var chatHistory = [];
 
+  function loadChatHistory() {
+    if (!supabase || !currentUserId) return Promise.resolve();
+    return supabase.from("chat_messages")
+      .select("role, content, created_at")
+      .eq("user_id", currentUserId)
+      .order("created_at", { ascending: true })
+      .limit(60)
+      .then(function (res) {
+        if (res.error || !res.data) return;
+        var log = document.getElementById("chatLog");
+        res.data.forEach(function (row) {
+          chatHistory.push({ role: row.role, content: row.content });
+          if (log) {
+            var cls = row.role === "user" ? "user" : "bot";
+            appendBubble(row.content, cls);
+          }
+        });
+      });
+  }
+
+  function saveChatMessage(role, content) {
+    if (!supabase || !currentUserId) return;
+    supabase.from("chat_messages").insert({
+      user_id: currentUserId, role: role, content: content
+    }).then(function (res) {
+      if (res.error) console.warn("Chat save failed:", res.error.message);
+    });
+  }
+
   function buildDynamicContext() {
     var journal = JSON.parse(localStorage.getItem("unbroken_journal") || "[]");
     var recaps = JSON.parse(localStorage.getItem("unbroken_recaps") || "[]");
@@ -528,6 +571,7 @@
     if (!text) return;
     appendBubble(text, "user");
     input.value = "";
+    saveChatMessage("user", text);
 
     if (CRISIS_PATTERN.test(text)) {
       appendBubble(CRISIS_MESSAGE, "crisis");
@@ -554,6 +598,7 @@
       var reply = (data.content || []).map(function (b) { return b.text || ""; }).join("").trim()
         || "Something went wrong on my end. Try again in a moment.";
       chatHistory.push({ role: "assistant", content: reply });
+      saveChatMessage("assistant", reply);
       placeholder.textContent = reply;
       placeholder.className = "chat-bubble bot";
     }).catch(function () {
@@ -590,7 +635,7 @@
 
   // ---------- Boot ----------
   ensureAuth().then(function () {
-    return Promise.all([loadReframes(), loadRightNow(), loadMaintenance()]);
+    return Promise.all([loadReframes(), loadRightNow(), loadMaintenance(), loadChatHistory()]);
   }).then(function () {
     renderToday();
     renderTracker();
@@ -598,5 +643,3 @@
   });
 
 })();
-
-
