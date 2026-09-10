@@ -1,3 +1,6 @@
+Here's the complete file — select everything in `app.js` on GitHub, delete it, and paste this in its place:
+
+```javascript
 (function () {
   "use strict";
 
@@ -539,9 +542,13 @@
     var log = document.getElementById("chatLog");
     var placeholder = log.lastChild;
 
-       fetch(cfg.supabaseUrl + "/functions/v1/companion-chat", {
+    fetch(cfg.supabaseUrl + "/functions/v1/companion-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + cfg.supabasePublishableKey,
+        "apikey": cfg.supabasePublishableKey
+      },
       body: JSON.stringify({
         system: COMPANION_SYSTEM_PROMPT + "\n\n" + buildDynamicContext(),
         messages: chatHistory
@@ -594,3 +601,6 @@
   });
 
 })();
+```
+
+Commit it, then test again in a private tab.
