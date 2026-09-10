@@ -1,5 +1,3 @@
-No problem — here's the full code. Copy everything between the lines below (tap and hold to select all, or use a "select all" option if your phone offers one):Let me get you the complete code without truncation — the view above cut out the middle section.Here's the complete code — copy everything between the two lines below (tap and hold at the start, drag to the end, or use "Select All" inside the code block):
-
 ```javascript
 (function () {
   "use strict";
