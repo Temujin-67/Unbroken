@@ -752,6 +752,18 @@
     "'stop seeking reassurance' in a safety situation, even if it resembles a repeated pattern. Follow the safety",
     "instructions in this prompt exactly as written, every time, with no exception for autonomy-handback language.",
     "",
+    "Once a safety conversation has begun, treat short follow-up replies — 'no', 'yes', 'I'm alone', 'I don't know',",
+    "'leave me alone', 'maybe', 'I can't' — as still inside that same safety conversation, not as a new, unrelated",
+    "message, unless the user has clearly and explicitly indicated the immediate risk has passed. Continue asking",
+    "about immediate safety and real-world support. If they say no one is nearby, do not end the exchange — say",
+    "something like: 'Okay. Then let's get another person involved now. Call emergency services or a crisis line,",
+    "or contact someone you trust and ask them to stay on the phone with you. If you can safely do so, move",
+    "somewhere other people are around while you make that call.' Keep replying and keep encouraging real-world",
+    "contact for as long as the safety concern is active — do not let the exchange trail off or end abruptly.",
+    "Continue outputting [STAGE:SAFETY] as the first line of every reply for as long as this safety conversation",
+    "is ongoing, including on short follow-up replies, so the app can keep the conversation in a safety-protected",
+    "state. Only stop tagging SAFETY once the user has clearly indicated the immediate concern has passed.",
+    "",
     "Internal observability tag — before your reply, on its own first line, output exactly one machine-readable tag",
     "and nothing else on that line: [STAGE:GUIDE], [STAGE:TEACH], [STAGE:QUESTION], or [STAGE:HANDBACK], choosing",
     "whichever stage this specific reply falls under. If your reply is a safety response under the safety",
@@ -835,7 +847,7 @@
     "respond with direct, plain concern, and clearly tell them to contact a crisis line or emergency services right now."
   ].join(" ");
 
-  var CRISIS_PATTERN = /\b(suicid|kill myself|end my life|self.?harm|hurt myself|want to die|no reason to live)\b/i;
+  var CRISIS_PATTERN = /\b(suicid|kill myself|end my life|self.?harm|hurt myself|want to die|no reason to live|point (in|of) living|not worth living|can'?t go on|give up on (life|living)|end it all|no point in )\b/i;
   var CRISIS_MESSAGE = "That sounds like a lot to carry alone right now. Please reach out to a crisis line — you can find one for your country at findahelpline.com, or contact your local emergency number. I'll stay here with you, but if this feeling persists, tell a real person today. Not eventually. Today.";
 
   var chatHistory = [];
@@ -886,6 +898,17 @@
     ].join(" ");
   }
 
+  var SAFETY_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+  function activateSafetyWindow() {
+    localStorage.setItem("unbroken_safety_active_until", String(Date.now() + SAFETY_WINDOW_MS));
+  }
+
+  function isSafetyActive() {
+    var until = parseInt(localStorage.getItem("unbroken_safety_active_until") || "0", 10);
+    return Date.now() < until;
+  }
+
   function logCompanionStage(stage) {
     console.log("[Unbroken] Companion stage:", stage);
     var stats = JSON.parse(localStorage.getItem("unbroken_companion_stage_stats") || "{}");
@@ -912,18 +935,23 @@
     input.value = "";
 
     if (CRISIS_PATTERN.test(text)) {
+      activateSafetyWindow();
       appendBubble(CRISIS_MESSAGE, "crisis");
       return;
     }
 
-    if (state.chatCount >= DAILY_CHAT_LIMIT) {
+    var inSafety = isSafetyActive();
+
+    if (!inSafety && state.chatCount >= DAILY_CHAT_LIMIT) {
       appendBubble("This can wait. Come back tomorrow — the Companion picks up again then.", "bot");
       return;
     }
 
     saveChatMessage("user", text);
-    state.chatCount += 1;
-    localStorage.setItem("unbroken_chat_count", String(state.chatCount));
+    if (!inSafety) {
+      state.chatCount += 1;
+      localStorage.setItem("unbroken_chat_count", String(state.chatCount));
+    }
 
     chatHistory.push({ role: "user", content: text });
     appendBubble("…", "bot");
@@ -948,7 +976,9 @@
       var stageMatch = reply.match(/^\[STAGE:(GUIDE|TEACH|QUESTION|HANDBACK|SAFETY)\]\s*\n?/i);
       if (stageMatch) {
         reply = reply.slice(stageMatch[0].length).trim();
-        logCompanionStage(stageMatch[1].toUpperCase());
+        var stage = stageMatch[1].toUpperCase();
+        logCompanionStage(stage);
+        if (stage === "SAFETY") activateSafetyWindow();
       }
 
       chatHistory.push({ role: "assistant", content: reply });
