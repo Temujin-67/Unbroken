@@ -1,4 +1,3 @@
-html
 <!doctype html>
 <html lang="en">
 <head>
@@ -12,7 +11,22 @@ html
   <div id="app">
 
     <div class="onboard-overlay hidden" id="onboardOverlay">
-      <div class="onboard-card" id="onboardStep1">
+      <div class="onboard-card hidden" id="onboardStep0">
+        <p class="onboard-title">Before you start</p>
+        <p class="onboard-body">Unbroken is a self-help tool based on Stoic techniques. Please read this:</p>
+        <ul class="disclaimer-list">
+          <li>This is not therapy, medical care, legal advice, or a crisis service.</li>
+          <li>The Companion is an AI. It can be wrong. It does not replace a licensed therapist, doctor, or lawyer.</li>
+          <li>If you are in crisis or thinking about harming yourself, contact a crisis line or emergency services now — this app is not equipped for emergencies.</li>
+          <li>What you write here is saved so you can look back on it later.</li>
+          <li>You must be 18 or older to use this app.</li>
+        </ul>
+        <label class="code-option disclaimer-check">
+          <input type="checkbox" id="disclaimerCheckbox" /> I have read and understand this.
+        </label>
+        <button class="btn-primary" id="disclaimerContinueBtn" disabled>Continue</button>
+      </div>
+      <div class="onboard-card hidden" id="onboardStep1">
         <p class="onboard-title">One quick question</p>
         <p class="onboard-body">Does this involve children you share with them?</p>
         <div class="onboard-actions">
@@ -273,3 +287,4 @@ html
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
+</html>
