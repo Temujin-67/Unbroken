@@ -808,6 +808,12 @@
     }
 
     chatHistory.push({ role: "user", content: text });
+
+    if (!currentAccessToken) {
+      appendBubble("DEBUG — no session token available. supabase client: " + (supabase ? "loaded" : "NULL") + ", currentUserId: " + (currentUserId || "none") + ". Check that anonymous sign-in is enabled in Supabase Auth settings.", "bot");
+      return;
+    }
+
     appendBubble("…", "bot");
     var log = document.getElementById("chatLog");
     var placeholder = log.lastChild;
