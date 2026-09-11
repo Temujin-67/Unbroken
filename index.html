@@ -1,3 +1,4 @@
+html
 <!doctype html>
 <html lang="en">
 <head>
@@ -11,13 +12,27 @@
   <div id="app">
 
     <div class="onboard-overlay hidden" id="onboardOverlay">
-      <div class="onboard-card">
+      <div class="onboard-card" id="onboardStep1">
         <p class="onboard-title">One quick question</p>
         <p class="onboard-body">Does this involve children you share with them?</p>
         <div class="onboard-actions">
           <button class="btn-ghost" id="onboardNoBtn">No</button>
           <button class="btn-primary" id="onboardYesBtn">Yes</button>
         </div>
+      </div>
+      <div class="onboard-card hidden" id="onboardStep2">
+        <p class="onboard-title">What kind of person do you want to be during this?</p>
+        <p class="onboard-body">Pick 3 to 5. This becomes your code — the app will hold you to it.</p>
+        <div class="code-options" id="codeOptions">
+          <label class="code-option"><input type="checkbox" value="Dignity" /> Dignity</label>
+          <label class="code-option"><input type="checkbox" value="Honesty" /> Honesty</label>
+          <label class="code-option"><input type="checkbox" value="Restraint" /> Restraint</label>
+          <label class="code-option"><input type="checkbox" value="Courage" /> Courage</label>
+          <label class="code-option"><input type="checkbox" value="Kindness" /> Kindness</label>
+          <label class="code-option"><input type="checkbox" value="Self-respect" /> Self-respect</label>
+          <label class="code-option"><input type="checkbox" value="Fairness" /> Fairness</label>
+        </div>
+        <button class="btn-primary" id="saveCodeBtn">Save my code</button>
       </div>
     </div>
 
@@ -59,6 +74,17 @@
         </div>
 
         <p class="tracker-note">No-contact is a tool, not a scoreboard. This tracks impulsive contact — not every reason to reach out is a setback, and a reset here isn't a verdict on you.</p>
+
+        <div class="urge-card hidden" id="resetClassifyCard">
+          <p class="urge-card-title">What kind of contact was this?</p>
+          <div class="reset-reason-grid" id="resetReasonGrid">
+            <button class="trigger-btn" data-reason="Necessary">Necessary</button>
+            <button class="trigger-btn" data-reason="Practical">Practical</button>
+            <button class="trigger-btn" data-reason="Emotional">Emotional</button>
+            <button class="trigger-btn" data-reason="Reassurance-seeking">Reassurance-seeking</button>
+            <button class="trigger-btn" data-reason="Regretted">Regretted</button>
+          </div>
+        </div>
 
         <!-- URGE TIMER FLOW -->
         <div class="urge-card hidden" id="urgeClassifyCard">
@@ -104,6 +130,8 @@
           <div class="stat-row"><span class="stat-label">Longest streak</span><span class="stat-value" id="statLongest">0</span></div>
           <div class="stat-row"><span class="stat-label">Urges logged, not acted on</span><span class="stat-value" id="statUrges">0</span></div>
           <div class="stat-row"><span class="stat-label">Times reset</span><span class="stat-value" id="statResets">0</span></div>
+          <div class="stat-row"><span class="stat-label">Necessary or practical contact</span><span class="stat-value" id="statNecessary">0</span></div>
+          <div class="stat-row"><span class="stat-label">Emotional or regretted contact</span><span class="stat-value" id="statEmotionalContact">0</span></div>
           <div class="stat-row"><span class="stat-label">Journal entries written</span><span class="stat-value" id="statEntries">0</span></div>
           <p class="review-intro">Up close, a hard week looks like failure. From here, it is one entry in a longer record you are still writing.</p>
         </div>
@@ -182,6 +210,19 @@
           <div id="lineSaved" class="saved-note hidden">Held.</div>
         </div>
 
+        <div class="line-card">
+          <p class="eyebrow">Fact, feeling, or story?</p>
+          <p class="recap-label">What happened (just the fact)?</p>
+          <input type="text" id="sortFact" class="line-input" placeholder="Only what you actually observed." />
+          <p class="recap-label">What are you feeling?</p>
+          <input type="text" id="sortFeeling" class="line-input" placeholder="Name it in one word or two." />
+          <p class="recap-label">What story are you telling yourself?</p>
+          <input type="text" id="sortStory" class="line-input" placeholder="The interpretation, not the fact." />
+          <button class="btn-primary" id="sortSaveBtn">Sort it</button>
+          <div id="sortSaved" class="saved-note hidden">Sorted.</div>
+          <p class="tracker-note">Action in your control: don't act on the story as though it were the fact.</p>
+        </div>
+
         <p class="group-label">Urges</p>
         <div class="trigger-grid" id="triggerGridUrge"></div>
 
@@ -232,4 +273,3 @@
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
-</html>
