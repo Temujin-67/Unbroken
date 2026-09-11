@@ -1,0 +1,16 @@
+{
+  "name": "unbroken",
+  "version": "1.0.0",
+  "description": "Unbroken — Stoic breakup recovery app",
+  "scripts": {
+    "sync": "cap sync"
+  },
+  "dependencies": {
+    "@capacitor/core": "latest",
+    "@capacitor/ios": "latest",
+    "@capacitor/android": "latest"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "latest"
+  }
+}
