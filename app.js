@@ -818,7 +818,7 @@
     chatHistory.push({ role: "user", content: text });
 
     if (!currentAccessToken) {
-      appendBubble("DEBUG — no session token. supabase: " + (supabase ? "loaded" : "NULL") + ", currentUserId: " + (currentUserId || "none") + ", authDebugInfo: " + authDebugInfo, "bot");
+      appendBubble("The companion couldn't connect right now. Try again in a moment.", "bot");
       return;
     }
 
@@ -840,9 +840,7 @@
     }).then(function (r) { return r.json(); }).then(function (data) {
       var reply = (data.content || []).map(function (b) { return b.text || ""; }).join("").trim();
       if (!reply) {
-        reply = (data && data.error)
-          ? "DEBUG — server said: " + data.error
-          : "DEBUG — no content and no error field in response: " + JSON.stringify(data);
+        reply = "Something went wrong on my end. Try again in a moment.";
       }
 
       var stageMatch = reply.match(/^\[STAGE:(GUIDE|TEACH|QUESTION|HANDBACK|SAFETY)\]\s*\n?/i);
