@@ -23,6 +23,7 @@
   } catch (e) {
     console.warn("Supabase init skipped:", e);
   }
+
   function ensureAuth() {
     if (!supabase) return Promise.resolve(null);
     return supabase.auth.getSession().then(function (res) {
@@ -311,12 +312,23 @@
   }
 
   document.getElementById("resetBtn").addEventListener("click", function () {
-    var ok = window.confirm("Log that you reached out? This resets the streak count.");
-    if (!ok) return;
+    document.getElementById("resetClassifyCard").classList.remove("hidden");
+  });
+
+  document.getElementById("resetReasonGrid").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-reason]");
+    if (!btn) return;
+    var reason = btn.getAttribute("data-reason");
+
+    var reasons = JSON.parse(localStorage.getItem("unbroken_reset_reasons") || "[]");
+    reasons.push({ reason: reason, created_at: new Date().toISOString() });
+    localStorage.setItem("unbroken_reset_reasons", JSON.stringify(reasons));
+
     state.lastResetDate = todayKey;
     state.resetCount += 1;
     localStorage.setItem("unbroken_last_reset_date", todayKey);
     localStorage.setItem("unbroken_reset_count", String(state.resetCount));
+    document.getElementById("resetClassifyCard").classList.add("hidden");
     document.getElementById("resetMessage").classList.remove("hidden");
     renderTracker();
   });
@@ -335,6 +347,12 @@
     document.getElementById("statUrges").textContent = state.totalUrges;
     document.getElementById("statResets").textContent = state.resetCount;
     document.getElementById("statEntries").textContent = computeJournalEntryCount();
+
+    var reasons = JSON.parse(localStorage.getItem("unbroken_reset_reasons") || "[]");
+    var necessary = reasons.filter(function (r) { return r.reason === "Necessary" || r.reason === "Practical"; }).length;
+    var emotional = reasons.filter(function (r) { return r.reason === "Emotional" || r.reason === "Reassurance-seeking" || r.reason === "Regretted"; }).length;
+    document.getElementById("statNecessary").textContent = necessary;
+    document.getElementById("statEmotionalContact").textContent = emotional;
   }
 
   document.getElementById("toggleAboveBtn").addEventListener("click", function () {
@@ -430,6 +448,11 @@
       all.push({ label: "The Line", text: e.text, date: e.created_at });
     });
 
+    var sortEntries = JSON.parse(localStorage.getItem("unbroken_sort_entries") || "[]");
+    sortEntries.forEach(function (e) {
+      all.push({ label: "Fact, feeling, or story", text: e.text, date: e.created_at });
+    });
+
     all.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
     return all;
   }
@@ -518,18 +541,65 @@
   });
 
   // ---------- Onboarding ----------
+  var disclaimerAccepted = localStorage.getItem("unbroken_disclaimer_accepted");
   var hasKids = localStorage.getItem("unbroken_has_kids");
-  if (hasKids === null) {
-    document.getElementById("onboardOverlay").classList.remove("hidden");
+  var hasCode = localStorage.getItem("unbroken_code");
+
+  function hideAllOnboardSteps() {
+    ["onboardStep0", "onboardStep1", "onboardStep2"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.add("hidden");
+    });
   }
+
+  function showNextOnboardStep() {
+    hideAllOnboardSteps();
+    if (!disclaimerAccepted) {
+      document.getElementById("onboardOverlay").classList.remove("hidden");
+      document.getElementById("onboardStep0").classList.remove("hidden");
+      return;
+    }
+    if (hasKids === null) {
+      document.getElementById("onboardOverlay").classList.remove("hidden");
+      document.getElementById("onboardStep1").classList.remove("hidden");
+      return;
+    }
+    if (!hasCode) {
+      document.getElementById("onboardOverlay").classList.remove("hidden");
+      document.getElementById("onboardStep2").classList.remove("hidden");
+      return;
+    }
+    document.getElementById("onboardOverlay").classList.add("hidden");
+  }
+
+  showNextOnboardStep();
+
+  document.getElementById("disclaimerCheckbox").addEventListener("change", function (e) {
+    document.getElementById("disclaimerContinueBtn").disabled = !e.target.checked;
+  });
+
+  document.getElementById("disclaimerContinueBtn").addEventListener("click", function () {
+    localStorage.setItem("unbroken_disclaimer_accepted", new Date().toISOString());
+    disclaimerAccepted = localStorage.getItem("unbroken_disclaimer_accepted");
+    showNextOnboardStep();
+  });
+
   function answerOnboarding(val) {
     localStorage.setItem("unbroken_has_kids", val);
     hasKids = val;
-    document.getElementById("onboardOverlay").classList.add("hidden");
+    showNextOnboardStep();
     renderTriggers();
   }
   document.getElementById("onboardYesBtn").addEventListener("click", function () { answerOnboarding("yes"); });
   document.getElementById("onboardNoBtn").addEventListener("click", function () { answerOnboarding("no"); });
+
+  document.getElementById("saveCodeBtn").addEventListener("click", function () {
+    var checked = document.querySelectorAll("#codeOptions input:checked");
+    var values = Array.prototype.map.call(checked, function (c) { return c.value; });
+    if (values.length) localStorage.setItem("unbroken_code", JSON.stringify(values));
+    hasCode = localStorage.getItem("unbroken_code");
+    showNextOnboardStep();
+  });
 
   // ---------- Right Now panel ----------
   var rightNowItems = [];
@@ -593,6 +663,31 @@
     setTimeout(function () { saved.classList.add("hidden"); }, 2000);
   });
 
+  document.getElementById("sortSaveBtn").addEventListener("click", function () {
+    var fact = document.getElementById("sortFact").value.trim();
+    var feeling = document.getElementById("sortFeeling").value.trim();
+    var story = document.getElementById("sortStory").value.trim();
+    if (!fact && !feeling && !story) return;
+
+    var entry = "Fact: " + fact + " | Feeling: " + feeling + " | Story: " + story;
+    var sorts = JSON.parse(localStorage.getItem("unbroken_sort_entries") || "[]");
+    sorts.push({ text: entry, created_at: new Date().toISOString() });
+    localStorage.setItem("unbroken_sort_entries", JSON.stringify(sorts));
+
+    if (supabase && currentUserId) {
+      supabase.from("journal_entries").insert({
+        user_id: currentUserId, prompt: "Fact, feeling, or story", entry: entry
+      }).then(function (res) { if (res.error) console.warn("Sort sync failed:", res.error.message); });
+    }
+
+    document.getElementById("sortFact").value = "";
+    document.getElementById("sortFeeling").value = "";
+    document.getElementById("sortStory").value = "";
+    var sortSaved = document.getElementById("sortSaved");
+    sortSaved.classList.remove("hidden");
+    setTimeout(function () { sortSaved.classList.add("hidden"); }, 2000);
+  });
+
   // ---------- Companion chat ----------
   var COMPANION_SYSTEM_PROMPT = [
     "You are the Companion inside Unbroken, an app that helps people through a breakup using Stoic philosophy",
@@ -610,6 +705,11 @@
     "reactive contact driven by the urge to soothe pain in the moment, not contact of every kind, always, forever.",
     "If the user reached out for a real reason, do not treat it as a relapse. Ask what kind of contact it was before",
     "assuming it was impulsive, if that isn't already clear from what they've told you.",
+    "",
+    "If the user has a personal code (a list of principles they chose for how they want to be during this breakup),",
+    "it will be given to you in their current state below. Refer to their own code by name when relevant, instead of",
+    "always quoting the classical Stoics — for example 'does this serve your restraint, or your current emotion?' —",
+    "using the specific words they chose. This is more powerful than a generic quote because it is their own standard.",
     "",
     "Voice model: write like a modern translation of Marcus Aurelius' Meditations, Epictetus' Enchiridion, and Seneca's Letters.",
     "Short declarative sentences. Plain nouns and verbs. State the principle, then the action. No filler before the point.",
@@ -701,6 +801,7 @@
     var journal = JSON.parse(localStorage.getItem("unbroken_journal") || "[]");
     var recaps = JSON.parse(localStorage.getItem("unbroken_recaps") || "[]");
     var reviews = JSON.parse(localStorage.getItem("unbroken_reviews") || "[]");
+    var code = JSON.parse(localStorage.getItem("unbroken_code") || "[]");
     return [
       "Current state of this user in the app, for your awareness only — do not recite this list back to them,",
       "use it to respond as someone who already knows where they are, the way a coach who has seen their log would:",
@@ -708,7 +809,8 @@
       "Current no-contact streak: " + computeStreak() + " days. Longest streak so far: " + state.longestStreak + " days.",
       "Times they have reset the streak: " + state.resetCount + ".",
       "Urges logged today (not acted on): " + state.urgesCount + ". Total urges logged all-time: " + state.totalUrges + ".",
-      "Journal and reflection entries written so far: " + (journal.length + recaps.length + reviews.length) + "."
+      "Journal and reflection entries written so far: " + (journal.length + recaps.length + reviews.length) + ".",
+      code.length ? "Their personal code, in their own words: " + code.join(", ") + "." : "They have not set a personal code yet."
     ].join(" ");
   }
 
