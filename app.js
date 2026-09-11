@@ -826,9 +826,9 @@
     }).then(function (r) { return r.json(); }).then(function (data) {
       var reply = (data.content || []).map(function (b) { return b.text || ""; }).join("").trim();
       if (!reply) {
-        reply = data.error
-          ? "The companion couldn't respond right now. Try again in a moment."
-          : "Something went wrong on my end. Try again in a moment.";
+        reply = (data && data.error)
+          ? "DEBUG — server said: " + data.error
+          : "DEBUG — no content and no error field in response: " + JSON.stringify(data);
       }
 
       var stageMatch = reply.match(/^\[STAGE:(GUIDE|TEACH|QUESTION|HANDBACK|SAFETY)\]\s*\n?/i);
