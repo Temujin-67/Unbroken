@@ -1,5 +1,16 @@
 (function () {
-  "use strict"; 
+  "use strict";
+
+  // ---------- Mobile viewport height fix (iOS Safari dvh timing bug) ----------
+  function setAppHeight() {
+    document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
+  }
+  setAppHeight();
+  window.addEventListener("resize", setAppHeight);
+  window.addEventListener("orientationchange", setAppHeight);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", setAppHeight);
+  }
 
   // ---------- Supabase (best-effort — app works fully offline if this fails) ----------
   var supabase = null;
@@ -12,7 +23,6 @@
   } catch (e) {
     console.warn("Supabase init skipped:", e);
   }
-
   function ensureAuth() {
     if (!supabase) return Promise.resolve(null);
     return supabase.auth.getSession().then(function (res) {
