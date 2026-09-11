@@ -1,5 +1,5 @@
 (function () {
-  "use strict"; 
+  "use strict";
 
   // ---------- Mobile viewport height fix (iOS Safari dvh timing bug) ----------
   function setAppHeight() {
@@ -25,24 +25,32 @@
     console.warn("Supabase init skipped:", e);
   }
 
+  var authDebugInfo = "ensureAuth not yet run";
+
   function ensureAuth() {
-    if (!supabase) return Promise.resolve(null);
+    if (!supabase) { authDebugInfo = "supabase client is null (init failed or window.supabase/UNBROKEN_CONFIG missing)"; return Promise.resolve(null); }
     return supabase.auth.getSession().then(function (res) {
+      if (res.error) { authDebugInfo = "getSession error: " + res.error.message; }
       if (res.data.session) {
         currentUserId = res.data.session.user.id;
         currentAccessToken = res.data.session.access_token;
+        authDebugInfo = "existing session found";
         return currentUserId;
       }
+      authDebugInfo = "no existing session, attempting signInAnonymously";
       return supabase.auth.signInAnonymously().then(function (res2) {
         if (res2.error) {
+          authDebugInfo = "signInAnonymously error: " + res2.error.message + " (status: " + (res2.error.status || "?") + ")";
           console.warn("Anonymous sign-in not available yet:", res2.error.message);
           return null;
         }
         currentUserId = res2.data.user.id;
         currentAccessToken = res2.data.session.access_token;
+        authDebugInfo = "signInAnonymously succeeded";
         return currentUserId;
       });
     }).catch(function (e) {
+      authDebugInfo = "ensureAuth threw: " + (e && e.message ? e.message : String(e));
       console.warn("Auth skipped, running local-only:", e);
       return null;
     });
@@ -810,7 +818,7 @@
     chatHistory.push({ role: "user", content: text });
 
     if (!currentAccessToken) {
-      appendBubble("DEBUG — no session token available. supabase client: " + (supabase ? "loaded" : "NULL") + ", currentUserId: " + (currentUserId || "none") + ". Check that anonymous sign-in is enabled in Supabase Auth settings.", "bot");
+      appendBubble("DEBUG — no session token. supabase: " + (supabase ? "loaded" : "NULL") + ", currentUserId: " + (currentUserId || "none") + ", authDebugInfo: " + authDebugInfo, "bot");
       return;
     }
 
