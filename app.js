@@ -1,5 +1,5 @@
 (function () {
-  "use strict";
+  "use strict"; 
 
   // ---------- Mobile viewport height fix (iOS Safari dvh timing bug) ----------
   function setAppHeight() {
