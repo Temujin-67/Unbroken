@@ -1,5 +1,5 @@
 (function () {
-  "use strict";
+  "use strict"; 
 
   // ---------- Supabase (best-effort — app works fully offline if this fails) ----------
   var supabase = null;
