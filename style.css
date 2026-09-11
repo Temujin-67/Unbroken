@@ -86,6 +86,28 @@ html, body {
   margin-bottom: 18px;
 }
 
+.disclaimer-list {
+  margin: 0 0 18px;
+  padding-left: 20px;
+  color: var(--bone-dim);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.disclaimer-list li {
+  margin-bottom: 10px;
+}
+
+.disclaimer-check {
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+
+#disclaimerContinueBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .code-option {
   display: flex;
   align-items: center;
