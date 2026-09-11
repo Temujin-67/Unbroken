@@ -2,7 +2,7 @@
   {
     "day": 1, "phase": "Stabilize", "technique": "Dichotomy of Control",
     "title": "What is yours",
-    "lesson": "You did not control the relationship. You control your actions. Nothing else was ever yours to lose.",
+    "lesson": "Thirty days is a structure, not a deadline. You are not expected to be over this by Day 30. There are no perfect days and no failed days. You did not control the relationship. You control your actions. Nothing else was ever yours to lose.",
     "action": "Write three things you control today. Ignore the rest."
   },
   {
@@ -18,10 +18,10 @@
     "action": "Write down your hardest moment today. Decide now what you will do instead of messaging."
   },
   {
-    "day": 4, "phase": "Stabilize", "technique": "View From Above",
-    "title": "See it from far away",
-    "lesson": "Picture your whole life. This relationship is a small part of it. It only feels huge because you are close to it.",
-    "action": "Write two sentences about this moment, from five years in the future."
+    "day": 4, "phase": "Stabilize", "technique": "Dichotomy of Control",
+    "title": "Notice, don't interpret yet",
+    "lesson": "\"They haven't answered\" is a fact. \"They don't care\" is a story you don't have evidence for yet.",
+    "action": "The next time something happens today, write only the fact. Leave the interpretation blank."
   },
   {
     "day": 5, "phase": "Stabilize", "technique": "Dichotomy of Control",
@@ -30,16 +30,16 @@
     "action": "Each time you want to check on them today, write it down instead of checking."
   },
   {
-    "day": 6, "phase": "Stabilize", "technique": "Amor Fati",
-    "title": "Use what happened",
-    "lesson": "This is not good or bad. It is simply what happened. You can only build your next step from what is real.",
-    "action": "Finish this sentence: Because this happened, I can now ___."
+    "day": 6, "phase": "Stabilize", "technique": "Dichotomy of Control",
+    "title": "The feeling doesn't need an action",
+    "lesson": "Anger, jealousy, loneliness — none of them require you to do anything right now. Feel it fully. Act deliberately, not automatically.",
+    "action": "When a strong feeling shows up today, name it before you do anything because of it."
   },
   {
     "day": 7, "phase": "Stabilize", "technique": "View From Above",
     "title": "One week is real progress",
-    "lesson": "Seven days without contact is not luck. It is proof you can do this.",
-    "action": "Write one sentence about what helped you get through the hardest day this week."
+    "lesson": "Seven days of choosing rather than simply reacting is real progress. You don't need a perfect record to have changed how you respond.",
+    "action": "Write one sentence about a moment this week when you paused instead of reacting."
   },
   {
     "day": 8, "phase": "Stabilize", "technique": "Dichotomy of Control",
@@ -67,15 +67,15 @@
   },
   {
     "day": 12, "phase": "Reframe", "technique": "Dichotomy of Control",
-    "title": "Feel it, then stop",
-    "lesson": "Grief that passes through you is normal. Grief that you keep calling back is a habit, not a feeling.",
-    "action": "Set a timer for ten minutes. Feel what you feel. When it ends, do something else."
+    "title": "Feel it without feeding it",
+    "lesson": "Grief can arrive without permission. You don't have to suppress it, and you don't have to keep giving it new material.",
+    "action": "Give the feeling ten minutes without analyzing the relationship. Then return to what is in front of you."
   },
   {
     "day": 13, "phase": "Reframe", "technique": "Premeditatio Malorum",
-    "title": "Picture the hardest scene",
-    "lesson": "Imagine seeing them with someone new. You have survived harder things already. Picture it now, calmly, so it loses its power over you.",
-    "action": "Write two sentences describing yourself in that moment, calm."
+    "title": "Don't suffer tomorrow twice",
+    "lesson": "Something painful may happen later. Imagining it on repeat does not soften it. It only adds pain that hasn't happened yet.",
+    "action": "Name one thing you are suffering today that has not actually happened. Set it down."
   },
   {
     "day": 14, "phase": "Reframe", "technique": "Dichotomy of Control",
@@ -86,20 +86,20 @@
   {
     "day": 15, "phase": "Reframe", "technique": "Amor Fati",
     "title": "It was real, not a mistake",
-    "lesson": "Calling the whole relationship a mistake erases what was true in it. It happened, it mattered, and it ended. All three are facts.",
-    "action": "Write one sentence that is true about the relationship, without judging it good or bad."
+    "lesson": "It happened, it mattered, and it ended. All three are facts. You can still say \"I miss them\" or \"I loved them\" without those words deciding what you do next.",
+    "action": "Write one sentence that is true about the relationship. Then write one thing you feel that you don't need to act on."
   },
   {
-    "day": 16, "phase": "Reframe", "technique": "Premeditatio Malorum",
-    "title": "A good memory will surface",
-    "lesson": "A good memory will come today, uninvited. It is not a sign to return. It is simply a memory.",
-    "action": "When it comes, name it as a memory, not a message. Then continue your day."
+    "day": 16, "phase": "Reframe", "technique": "Amor Fati",
+    "title": "What became quieter",
+    "lesson": "Loss isn't only what you miss. Notice what pressure, conflict, or anxiety has gone quiet since this changed — without turning it into a verdict on them.",
+    "action": "Name one thing that's become quieter. If it belongs there, add it to your Relationship Review."
   },
   {
     "day": 17, "phase": "Reframe", "technique": "View From Above",
-    "title": "You are past the hardest math",
-    "lesson": "The distance between the version of you two weeks ago and the version of you now is larger than it feels day to day.",
-    "action": "Write one thing that used to take everything you had, and now takes less."
+    "title": "Look back, not sideways",
+    "lesson": "Day-to-day change is difficult to see. Compare how you respond now with how you responded two weeks ago.",
+    "action": "Name one thing that still hurts, but controls your behavior less."
   },
   {
     "day": 18, "phase": "Reframe", "technique": "Dichotomy of Control",
@@ -121,9 +121,9 @@
   },
   {
     "day": 21, "phase": "Rebuild", "technique": "View From Above",
-    "title": "You are not who you were",
-    "lesson": "Day-one you could not have done what today-you just did. That's not a metaphor. That's rebuilt.",
-    "action": "Name one thing you handled this week that would have wrecked you three weeks ago."
+    "title": "Look for evidence",
+    "lesson": "You may still feel much of what you felt on Day 1. The question is whether you meet it differently now.",
+    "action": "Name one difficult moment you handled more deliberately this week."
   },
   {
     "day": 22, "phase": "Rebuild", "technique": "Dichotomy of Control",
@@ -132,16 +132,16 @@
     "action": "Write one non-negotiable you're carrying forward."
   },
   {
-    "day": 23, "phase": "Rebuild", "technique": "Amor Fati",
-    "title": "Boredom is not a relapse",
-    "lesson": "Some days will simply be flat. That is not the relationship's absence catching up with you. That is an ordinary day.",
-    "action": "Do one thing today for no reason other than that you wanted to."
+    "day": 23, "phase": "Rebuild", "technique": "Dichotomy of Control",
+    "title": "Kindness is not a contract",
+    "lesson": "You can still be decent to them — help, answer a practical question, share a responsibility — without it meaning anything about getting back together.",
+    "action": "If you do something decent for them today, do it only because you'd still do it knowing it changes nothing."
   },
   {
     "day": 24, "phase": "Rebuild", "technique": "Dichotomy of Control",
-    "title": "Other people's opinions of your pace",
-    "lesson": "Someone may think you moved on too fast, or too slow. Their timeline for you is not yours to manage.",
-    "action": "Write one sentence about your own pace, without defending it to anyone."
+    "title": "Someone else's uncertainty does not suspend your life",
+    "lesson": "They're allowed not to know what they want. You're allowed to decide how long you're willing to wait inside that uncertainty. That's not an ultimatum — it's agency.",
+    "action": "Write one decision that belongs to you, regardless of what they eventually decide."
   },
   {
     "day": 25, "phase": "Rebuild", "technique": "Premeditatio Malorum",
@@ -157,9 +157,9 @@
   },
   {
     "day": 27, "phase": "Rebuild", "technique": "Dichotomy of Control",
-    "title": "Readiness is not a feeling you wait for",
-    "lesson": "You will not wake up one day simply feeling ready to date again. Readiness is closer to a decision than a sensation.",
-    "action": "Write one sentence about what you are actually ready for right now, separate from what you feel."
+    "title": "Love is not the only question",
+    "lesson": "\"Do I still love them\" isn't enough to answer whether a relationship should continue. Respect, trust, honesty, and the ability to repair conflict are separate questions.",
+    "action": "If love were removed from the question, what would you require from a relationship?"
   },
   {
     "day": 28, "phase": "Rebuild", "technique": "Amor Fati",
@@ -170,7 +170,7 @@
   {
     "day": 29, "phase": "Rebuild", "technique": "View From Above",
     "title": "Twenty-nine days of evidence",
-    "lesson": "This is not a mood that happened to hold. It is a record of choices, made on purpose, most days in a row.",
+    "lesson": "This is not a mood that happened to hold. It is a record of choices, made on purpose, most days in a row. Some of those days you felt worse and acted better. That's still the record.",
     "action": "Write one sentence naming what you are proud of, without qualifying it."
   },
   {
