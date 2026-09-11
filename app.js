@@ -200,20 +200,42 @@
     setTimeout(function () { saved.classList.add("hidden"); }, 2000);
   });
 
-  // ---------- Tracker ----------
-  function renderTracker() {
-    var current = computeStreak();
-    if (current > state.longestStreak) {
-      state.longestStreak = current;
-      localStorage.setItem("unbroken_longest_streak", String(current));
-    }
-    document.getElementById("streakNumber").textContent = current;
-    document.getElementById("longestStreak").textContent = "Longest streak: " + state.longestStreak + " days";
-    document.getElementById("urgeCount").textContent = state.urgesCount;
-    syncStreakToServer(current, state.longestStreak);
+  var HOLD_MINUTES = 30;
+
+  function getUrgeHold() {
+    var raw = localStorage.getItem("unbroken_urge_hold");
+    return raw ? JSON.parse(raw) : null;
   }
 
-  document.getElementById("urgeBtn").addEventListener("click", function () {
+  function setUrgeHold(hold) {
+    if (hold) localStorage.setItem("unbroken_urge_hold", JSON.stringify(hold));
+    else localStorage.removeItem("unbroken_urge_hold");
+  }
+
+  function hideAllUrgeCards() {
+    ["urgeClassifyCard", "urgeWriteCard", "urgeHoldingCard", "urgeRevisitCard"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.add("hidden");
+    });
+  }
+
+  function renderUrgeArea() {
+    var hold = getUrgeHold();
+    hideAllUrgeCards();
+    if (!hold) return;
+
+    var elapsedMin = (Date.now() - new Date(hold.created_at).getTime()) / 60000;
+    if (elapsedMin >= HOLD_MINUTES) {
+      document.getElementById("urgeDraftReadback").textContent = hold.text;
+      document.getElementById("urgeRevisitCard").classList.remove("hidden");
+    } else {
+      var remaining = Math.ceil(HOLD_MINUTES - elapsedMin);
+      document.getElementById("urgeHoldingText").textContent = "Held. Revisit in " + remaining + " minute" + (remaining === 1 ? "" : "s") + ".";
+      document.getElementById("urgeHoldingCard").classList.remove("hidden");
+    }
+  }
+
+  function logUrge(type) {
     state.urgesCount += 1;
     state.totalUrges += 1;
     localStorage.setItem("unbroken_urges_count", String(state.urgesCount));
@@ -225,7 +247,58 @@
         if (res.error) console.warn("Urge log sync failed:", res.error.message);
       });
     }
+  }
+
+  document.getElementById("urgeBtn").addEventListener("click", function () {
+    if (getUrgeHold()) { renderUrgeArea(); return; }
+    hideAllUrgeCards();
+    document.getElementById("urgeClassifyCard").classList.remove("hidden");
   });
+
+  document.getElementById("urgeNecessaryBtn").addEventListener("click", function () {
+    logUrge("necessary");
+    hideAllUrgeCards();
+  });
+
+  document.getElementById("urgeEmotionalBtn").addEventListener("click", function () {
+    logUrge("emotional");
+    hideAllUrgeCards();
+    document.getElementById("urgeWriteCard").classList.remove("hidden");
+  });
+
+  document.getElementById("startHoldBtn").addEventListener("click", function () {
+    var text = document.getElementById("urgeDraftText").value.trim();
+    if (!text) return;
+    setUrgeHold({ text: text, created_at: new Date().toISOString() });
+    document.getElementById("urgeDraftText").value = "";
+    renderUrgeArea();
+  });
+
+  document.getElementById("gladWaitedBtn").addEventListener("click", function () {
+    setUrgeHold(null);
+    hideAllUrgeCards();
+  });
+
+  document.getElementById("stillWantBtn").addEventListener("click", function () {
+    setUrgeHold(null);
+    hideAllUrgeCards();
+  });
+
+  setInterval(renderUrgeArea, 60000);
+
+  // ---------- Tracker ----------
+  function renderTracker() {
+    var current = computeStreak();
+    if (current > state.longestStreak) {
+      state.longestStreak = current;
+      localStorage.setItem("unbroken_longest_streak", String(current));
+    }
+    document.getElementById("streakNumber").textContent = current;
+    document.getElementById("longestStreak").textContent = "Longest streak: " + state.longestStreak + " days";
+    document.getElementById("urgeCount").textContent = state.urgesCount;
+    syncStreakToServer(current, state.longestStreak);
+    renderUrgeArea();
+  }
 
   document.getElementById("resetBtn").addEventListener("click", function () {
     var ok = window.confirm("Log that you reached out? This resets the streak count.");
@@ -340,6 +413,11 @@
     Object.keys(todayNotes).forEach(function (dateKey) {
       var n = todayNotes[dateKey];
       all.push({ label: "Today's move — " + n.title, text: n.text, date: n.created_at });
+    });
+
+    var lineEntries = JSON.parse(localStorage.getItem("unbroken_line_entries") || "[]");
+    lineEntries.forEach(function (e) {
+      all.push({ label: "The Line", text: e.text, date: e.created_at });
     });
 
     all.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
@@ -479,6 +557,31 @@
     box.classList.remove("hidden");
     box.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
+
+  document.getElementById("holdLineBtn").addEventListener("click", function () {
+    var what = document.getElementById("lineWhat").value.trim();
+    var control = document.getElementById("lineControl").value.trim();
+    var action = document.getElementById("lineAction").value.trim();
+    if (!what && !control && !action) return;
+
+    var entry = "What happened: " + what + " | In my control: " + control + " | Tomorrow: " + action;
+    var lines = JSON.parse(localStorage.getItem("unbroken_line_entries") || "[]");
+    lines.push({ text: entry, created_at: new Date().toISOString() });
+    localStorage.setItem("unbroken_line_entries", JSON.stringify(lines));
+
+    if (supabase && currentUserId) {
+      supabase.from("journal_entries").insert({
+        user_id: currentUserId, prompt: "The Line", entry: entry
+      }).then(function (res) { if (res.error) console.warn("Line sync failed:", res.error.message); });
+    }
+
+    document.getElementById("lineWhat").value = "";
+    document.getElementById("lineControl").value = "";
+    document.getElementById("lineAction").value = "";
+    var saved = document.getElementById("lineSaved");
+    saved.classList.remove("hidden");
+    setTimeout(function () { saved.classList.add("hidden"); }, 2000);
+  });
 
   // ---------- Companion chat ----------
   var COMPANION_SYSTEM_PROMPT = [
