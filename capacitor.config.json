@@ -1,7 +1,7 @@
 {
   "appId": "com.unbroken.app",
   "appName": "Unbroken",
-  "webDir": ".",
+  "webDir": "www",
   "server": {
     "androidScheme": "https"
   }
