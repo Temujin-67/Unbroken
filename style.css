@@ -77,6 +77,32 @@ html, body {
   width: auto;
 }
 
+.code-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.code-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: var(--bone);
+}
+
+.code-option input {
+  width: 18px;
+  height: 18px;
+}
+
+.reset-reason-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .topbar {
   display: flex;
   align-items: baseline;
@@ -152,6 +178,23 @@ html, body {
   margin: 0 0 8px;
 }
 
+.today-note {
+  width: 100%;
+  min-height: 90px;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--bone);
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 12px;
+  resize: vertical;
+  font-family: inherit;
+  margin: 4px 0 12px;
+}
+
+.today-note::placeholder { color: var(--bone-dim); }
+
 .action-text {
   font-size: 16px;
   line-height: 1.5;
@@ -189,8 +232,94 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 32px;
+  margin-bottom: 14px;
 }
+
+.tracker-note {
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+
+.urge-card {
+  background: var(--card);
+  border: 1px solid var(--bronze-dim);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.urge-card.hidden { display: none; }
+
+.urge-card-title {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.urge-card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.urge-card-actions button {
+  width: auto;
+  flex: 1;
+  font-size: 14px;
+  padding: 12px 10px;
+}
+
+.urge-draft {
+  width: 100%;
+  min-height: 90px;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--bone);
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 12px;
+  resize: vertical;
+  font-family: inherit;
+  margin-bottom: 12px;
+}
+
+.urge-draft::placeholder { color: var(--bone-dim); }
+
+.urge-draft-readback {
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bone-dim);
+  margin: 0 0 14px;
+  white-space: pre-wrap;
+}
+
+.line-card {
+  background: var(--card);
+  border: 1px solid var(--bronze-dim);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 28px;
+}
+
+.line-input {
+  width: 100%;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--bone);
+  font-size: 15px;
+  padding: 12px 14px;
+  font-family: inherit;
+  margin: 4px 0 12px;
+}
+
+.line-input::placeholder { color: var(--bone-dim); }
 
 .urge-log {
   background: var(--card);
