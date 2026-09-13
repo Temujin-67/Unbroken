@@ -91,6 +91,13 @@ jobs:
             <string>app-store</string>
             <key>teamID</key>
             <string>${{ secrets.IOS_TEAM_ID }}</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.temujin67.unbroken</key>
+              <string>Unbroken AppStore</string>
+            </dict>
           </dict>
           </plist>
           PLIST_EOF
