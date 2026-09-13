@@ -28,6 +28,13 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Generate app icons and splash screen
+        run: |
+          mkdir -p resources
+          cp icon.png resources/icon.png
+          cp splash.png resources/splash.png
+          npx capacitor-assets generate --android
+
       - name: Sync web assets
         run: npx cap sync android
 
