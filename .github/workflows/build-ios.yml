@@ -56,6 +56,13 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $RUNNER_TEMP/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
+      - name: Create code signing override for SPM resource bundles
+        run: |
+          cat > $RUNNER_TEMP/DisableResourceBundleSigning.xcconfig << 'XCCONFIG_EOF'
+          CODE_SIGNING_REQUIRED[target=RevenueCat_RevenueCat] = NO
+          CODE_SIGNING_ALLOWED[target=RevenueCat_RevenueCat] = NO
+          XCCONFIG_EOF
+
       - name: Build and archive iOS app
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -66,9 +73,11 @@ jobs:
             -configuration Release \
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -destination "generic/platform=iOS" \
-            -allowProvisioningUpdates \
+            -xcconfig $RUNNER_TEMP/DisableResourceBundleSigning.xcconfig \
             DEVELOPMENT_TEAM=$IOS_TEAM_ID \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER="Unbroken AppStore" \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             archive
 
       - name: Export IPA
