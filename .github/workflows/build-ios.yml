@@ -40,8 +40,8 @@ jobs:
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
-          echo "$IOS_P12_BASE64" | base64 --decode > $RUNNER_TEMP/certificate.p12
-          echo "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode > $RUNNER_TEMP/profile.mobileprovision
+          echo "$IOS_P12_BASE64" | tr -d '\n\r ' | base64 --decode > $RUNNER_TEMP/certificate.p12
+          echo "$IOS_PROVISIONING_PROFILE_BASE64" | tr -d '\n\r ' | base64 --decode > $RUNNER_TEMP/profile.mobileprovision
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
