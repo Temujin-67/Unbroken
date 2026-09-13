@@ -12,6 +12,7 @@
     "@revenuecat/purchases-capacitor": "latest"
   },
   "devDependencies": {
-    "@capacitor/cli": "latest"
+    "@capacitor/cli": "latest",
+    "@capacitor/assets": "latest"
   }
 }
