@@ -56,6 +56,44 @@
     });
   }
 
+  // ---------- RevenueCat (Companion paywall) ----------
+  // Only real inside a compiled native app — the Capacitor plugin does nothing in a plain
+  // browser, so browser testing (like this GitHub Pages preview) always treats Companion as
+  // unlocked. Real enforcement only happens in the actual installed app.
+  var isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  var RCPurchases = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorPurchases) || null;
+  var COMPANION_ENTITLEMENT_ID = "companion_access";
+  var COMPANION_PRODUCT_ID = "com.temujin67.unbroken.companion.monthly";
+  var hasCompanionAccess = !isNativeApp;
+
+  function initRevenueCat() {
+    if (!isNativeApp) return Promise.resolve();
+    if (!RCPurchases) {
+      console.warn("[Unbroken] RevenueCat plugin not found on window.Capacitor.Plugins.CapacitorPurchases — check plugin registration name in a live build.");
+      return Promise.resolve();
+    }
+    var platform = window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "";
+    var apiKey = platform === "ios" ? cfg.revenueCatIosKey : cfg.revenueCatAndroidKey;
+    if (!apiKey) return Promise.resolve();
+    return RCPurchases.configure({ apiKey: apiKey }).then(function () {
+      return refreshCompanionAccess();
+    }).catch(function (e) {
+      console.warn("[Unbroken] RevenueCat configure failed:", e);
+    });
+  }
+
+  function refreshCompanionAccess() {
+    if (!isNativeApp || !RCPurchases) return Promise.resolve(hasCompanionAccess);
+    return RCPurchases.getCustomerInfo().then(function (result) {
+      var info = result && result.customerInfo;
+      hasCompanionAccess = !!(info && info.entitlements && info.entitlements.active && info.entitlements.active[COMPANION_ENTITLEMENT_ID]);
+      return hasCompanionAccess;
+    }).catch(function (e) {
+      console.warn("[Unbroken] Could not refresh entitlement:", e);
+      return hasCompanionAccess;
+    });
+  }
+
   // ---------- Local state ----------
   var todayKey = new Date().toISOString().slice(0, 10);
 
@@ -878,8 +916,9 @@
   var views = document.querySelectorAll(".view");
 
   function showView(name) {
+    var visibleName = (name === "companion" && !hasCompanionAccess) ? "paywall" : name;
     views.forEach(function (v) {
-      v.classList.toggle("hidden", v.dataset.view !== name);
+      v.classList.toggle("hidden", v.dataset.view !== visibleName);
     });
     tabs.forEach(function (t) {
       t.classList.toggle("active", t.dataset.target === name);
@@ -892,9 +931,69 @@
     });
   });
 
+  function showPaywallMessage(text) {
+    var el = document.getElementById("paywallMessage");
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove("hidden");
+  }
+
+  var subscribeBtn = document.getElementById("subscribeBtn");
+  if (subscribeBtn) subscribeBtn.addEventListener("click", function () {
+    if (!isNativeApp || !RCPurchases) {
+      showPaywallMessage("Subscriptions only work in the installed app, not in this browser preview.");
+      return;
+    }
+    subscribeBtn.disabled = true;
+    RCPurchases.getProducts({ productIdentifiers: [COMPANION_PRODUCT_ID] }).then(function (res) {
+      var products = (res && res.products) || [];
+      if (!products.length) {
+        showPaywallMessage("Couldn't load the subscription right now. Try again in a moment.");
+        subscribeBtn.disabled = false;
+        return null;
+      }
+      return RCPurchases.purchaseStoreProduct({ product: products[0] });
+    }).then(function (purchaseResult) {
+      if (!purchaseResult) return;
+      return refreshCompanionAccess();
+    }).then(function () {
+      subscribeBtn.disabled = false;
+      if (hasCompanionAccess) showView("companion");
+    }).catch(function (e) {
+      subscribeBtn.disabled = false;
+      if (e && e.userCancelled) return;
+      console.warn("[Unbroken] Purchase failed:", e);
+      showPaywallMessage("Something went wrong with the purchase. Try again.");
+    });
+  });
+
+  var restorePurchasesBtn = document.getElementById("restorePurchasesBtn");
+  if (restorePurchasesBtn) restorePurchasesBtn.addEventListener("click", function () {
+    if (!isNativeApp || !RCPurchases) {
+      showPaywallMessage("Restore only works in the installed app, not in this browser preview.");
+      return;
+    }
+    restorePurchasesBtn.disabled = true;
+    RCPurchases.restorePurchases().then(function () {
+      return refreshCompanionAccess();
+    }).then(function () {
+      restorePurchasesBtn.disabled = false;
+      if (hasCompanionAccess) {
+        showPaywallMessage("Restored — opening Companion.");
+        setTimeout(function () { showView("companion"); }, 800);
+      } else {
+        showPaywallMessage("No active subscription found for this account.");
+      }
+    }).catch(function (e) {
+      restorePurchasesBtn.disabled = false;
+      console.warn("[Unbroken] Restore failed:", e);
+      showPaywallMessage("Couldn't restore purchases. Try again.");
+    });
+  });
+
   // ---------- Boot ----------
   ensureAuth().then(function () {
-    return Promise.all([loadReframes(), loadRightNow(), loadMaintenance(), loadChatHistory()]);
+    return Promise.all([loadReframes(), loadRightNow(), loadMaintenance(), loadChatHistory(), initRevenueCat()]);
   }).then(function () {
     renderToday();
     renderTracker();
