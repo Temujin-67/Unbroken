@@ -8,7 +8,8 @@
   "dependencies": {
     "@capacitor/core": "latest",
     "@capacitor/ios": "latest",
-    "@capacitor/android": "latest"
+    "@capacitor/android": "latest",
+    "@revenuecat/purchases-capacitor": "latest"
   },
   "devDependencies": {
     "@capacitor/cli": "latest"
