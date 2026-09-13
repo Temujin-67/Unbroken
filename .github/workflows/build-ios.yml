@@ -122,6 +122,8 @@ jobs:
           echo "Files in export directory:"
           ls -la "$RUNNER_TEMP/export/"
 
+          echo "ASC_API_KEY_BASE64 length: ${#ASC_API_KEY_BASE64}"
+
           gem install fastlane -N
 
           KEY_PATH="$RUNNER_TEMP/AuthKey_$ASC_API_KEY_ID.p8"
