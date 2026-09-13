@@ -75,7 +75,9 @@
     var platform = window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "";
     var apiKey = platform === "ios" ? cfg.revenueCatIosKey : cfg.revenueCatAndroidKey;
     if (!apiKey) return Promise.resolve();
-    return RCPurchases.configure({ apiKey: apiKey }).then(function () {
+    var configureOptions = { apiKey: apiKey };
+    if (currentUserId) configureOptions.appUserID = currentUserId;
+    return RCPurchases.configure(configureOptions).then(function () {
       return refreshCompanionAccess();
     }).catch(function (e) {
       console.warn("[Unbroken] RevenueCat configure failed:", e);
@@ -873,9 +875,18 @@
       },
       body: JSON.stringify({
         messages: chatHistory,
-        dynamicContext: buildDynamicContext()
+        dynamicContext: buildDynamicContext(),
+        platform: isNativeApp ? (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "unknown") : "web"
       })
     }).then(function (r) { return r.json(); }).then(function (data) {
+      if (data && data.errorCode === "subscription_required") {
+        hasCompanionAccess = false;
+        placeholder.remove();
+        showView("companion");
+        showPaywallMessage("Your Companion subscription isn't active. Subscribe to continue.");
+        return;
+      }
+
       var reply = (data.content || []).map(function (b) { return b.text || ""; }).join("").trim();
       if (!reply) {
         reply = "Something went wrong on my end. Try again in a moment.";
