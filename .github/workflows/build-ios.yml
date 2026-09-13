@@ -122,14 +122,24 @@ jobs:
           echo "Files in export directory:"
           ls -la "$RUNNER_TEMP/export/"
 
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$ASC_API_KEY_BASE64" | tr -d '\n\r ' | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$ASC_API_KEY_ID.p8
+          gem install fastlane -N
+
+          KEY_PATH="$RUNNER_TEMP/AuthKey_$ASC_API_KEY_ID.p8"
+          echo "$ASC_API_KEY_BASE64" | tr -d '\n\r ' | base64 --decode > "$KEY_PATH"
+
+          cat > "$RUNNER_TEMP/api_key.json" << JSON_EOF
+          {
+            "key_id": "$ASC_API_KEY_ID",
+            "issuer_id": "$ASC_API_ISSUER_ID",
+            "key_filepath": "$KEY_PATH",
+            "in_house": false
+          }
+          JSON_EOF
 
           IPA_FILE=$(find "$RUNNER_TEMP/export" -name "*.ipa" | head -n 1)
           echo "Uploading: $IPA_FILE"
 
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA_FILE" \
-            --apiKey "$ASC_API_KEY_ID" \
-            --apiIssuer "$ASC_API_ISSUER_ID"
+          fastlane pilot upload \
+            --ipa "$IPA_FILE" \
+            --api_key_path "$RUNNER_TEMP/api_key.json" \
+            --skip_waiting_for_build_processing true
