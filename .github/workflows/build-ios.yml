@@ -112,3 +112,24 @@ jobs:
         with:
           name: unbroken-ios-ipa
           path: ${{ runner.temp }}/export/*.ipa
+
+      - name: Upload to TestFlight
+        env:
+          ASC_API_KEY_BASE64: ${{ secrets.ASC_API_KEY_BASE64 }}
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: |
+          echo "Files in export directory:"
+          ls -la "$RUNNER_TEMP/export/"
+
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_API_KEY_BASE64" | tr -d '\n\r ' | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$ASC_API_KEY_ID.p8
+
+          IPA_FILE=$(find "$RUNNER_TEMP/export" -name "*.ipa" | head -n 1)
+          echo "Uploading: $IPA_FILE"
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_FILE" \
+            --apiKey "$ASC_API_KEY_ID" \
+            --apiIssuer "$ASC_API_ISSUER_ID"
