@@ -63,7 +63,7 @@
   var isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   var RCPurchases = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorPurchases) || null;
   var COMPANION_ENTITLEMENT_ID = "companion_access";
-  var COMPANION_PRODUCT_ID = "com.temujin67.unbroken.companion.monthly";
+  var COMPANION_PRODUCT_ID = "com.temujin67.unbroken.companion.unlock";
   var hasCompanionAccess = !isNativeApp;
 
   function initRevenueCat() {
@@ -883,7 +883,7 @@
         hasCompanionAccess = false;
         placeholder.remove();
         showView("companion");
-        showPaywallMessage("Your Companion subscription isn't active. Subscribe to continue.");
+        showPaywallMessage("Your Companion access isn't active. Unlock it below to continue.");
         return;
       }
 
@@ -952,14 +952,18 @@
   var subscribeBtn = document.getElementById("subscribeBtn");
   if (subscribeBtn) subscribeBtn.addEventListener("click", function () {
     if (!isNativeApp || !RCPurchases) {
-      showPaywallMessage("Subscriptions only work in the installed app, not in this browser preview.");
+      var diag = "DEBUG — isNativeApp: " + isNativeApp +
+        " | Capacitor exists: " + !!window.Capacitor +
+        " | platform: " + (window.Capacitor && window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "?") +
+        " | plugins: " + (window.Capacitor && window.Capacitor.Plugins ? Object.keys(window.Capacitor.Plugins).join(", ") : "none");
+      showPaywallMessage(diag);
       return;
     }
     subscribeBtn.disabled = true;
     RCPurchases.getProducts({ productIdentifiers: [COMPANION_PRODUCT_ID] }).then(function (res) {
       var products = (res && res.products) || [];
       if (!products.length) {
-        showPaywallMessage("Couldn't load the subscription right now. Try again in a moment.");
+        showPaywallMessage("Couldn't load the purchase right now. Try again in a moment.");
         subscribeBtn.disabled = false;
         return null;
       }
@@ -981,7 +985,11 @@
   var restorePurchasesBtn = document.getElementById("restorePurchasesBtn");
   if (restorePurchasesBtn) restorePurchasesBtn.addEventListener("click", function () {
     if (!isNativeApp || !RCPurchases) {
-      showPaywallMessage("Restore only works in the installed app, not in this browser preview.");
+      var diag2 = "DEBUG — isNativeApp: " + isNativeApp +
+        " | Capacitor exists: " + !!window.Capacitor +
+        " | platform: " + (window.Capacitor && window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "?") +
+        " | plugins: " + (window.Capacitor && window.Capacitor.Plugins ? Object.keys(window.Capacitor.Plugins).join(", ") : "none");
+      showPaywallMessage(diag2);
       return;
     }
     restorePurchasesBtn.disabled = true;
@@ -993,7 +1001,7 @@
         showPaywallMessage("Restored — opening Companion.");
         setTimeout(function () { showView("companion"); }, 800);
       } else {
-        showPaywallMessage("No active subscription found for this account.");
+        showPaywallMessage("No active purchase found for this account.");
       }
     }).catch(function (e) {
       restorePurchasesBtn.disabled = false;
