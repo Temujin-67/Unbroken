@@ -86,6 +86,7 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="Unbroken AppStore" \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            TARGETED_DEVICE_FAMILY=1 \
             archive
 
       - name: Export IPA
