@@ -130,18 +130,27 @@ html, body {
 }
 
 .topbar {
+  position: relative;
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 20px 24px 12px;
   padding-top: calc(20px + env(safe-area-inset-top));
 }
 
 .wordmark {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.2px;
+  background: linear-gradient(90deg, var(--bone-dim) 0%, var(--bronze) 55%, #F0D5A8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .day-pill {
@@ -171,7 +180,7 @@ html, body {
   font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
   font-size: 30px;
   line-height: 1.25;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0 0 16px;
   max-width: 22ch;
 }
