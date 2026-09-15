@@ -63,7 +63,7 @@
   var isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   var RCPurchases = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases) || null;
   var COMPANION_ENTITLEMENT_ID = "companion_access";
-  var COMPANION_PRODUCT_ID = "com.temujin67.unbroken.companion.unlock";
+  var COMPANION_PRODUCT_ID = "com.temujin67.unbroken.companion.lifetime";
   var hasCompanionAccess = !isNativeApp;
 
   function initRevenueCat() {
