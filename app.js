@@ -61,7 +61,7 @@
   // browser, so browser testing (like this GitHub Pages preview) always treats Companion as
   // unlocked. Real enforcement only happens in the actual installed app.
   var isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-  var RCPurchases = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorPurchases) || null;
+  var RCPurchases = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases) || null;
   var COMPANION_ENTITLEMENT_ID = "companion_access";
   var COMPANION_PRODUCT_ID = "com.temujin67.unbroken.companion.unlock";
   var hasCompanionAccess = !isNativeApp;
@@ -69,7 +69,7 @@
   function initRevenueCat() {
     if (!isNativeApp) return Promise.resolve();
     if (!RCPurchases) {
-      console.warn("[Unbroken] RevenueCat plugin not found on window.Capacitor.Plugins.CapacitorPurchases — check plugin registration name in a live build.");
+      console.warn("[Unbroken] RevenueCat plugin not found on window.Capacitor.Plugins.Purchases.");
       return Promise.resolve();
     }
     var platform = window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "";
