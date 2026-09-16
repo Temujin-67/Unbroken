@@ -77,11 +77,21 @@
     if (!apiKey) return Promise.resolve();
     var configureOptions = { apiKey: apiKey };
     if (currentUserId) configureOptions.appUserID = currentUserId;
-    return RCPurchases.configure(configureOptions).then(function () {
-      return refreshCompanionAccess();
-    }).catch(function (e) {
-      console.warn("[Unbroken] RevenueCat configure failed:", e);
-    });
+    try {
+      var configureResult = RCPurchases.configure(configureOptions);
+      if (!configureResult || typeof configureResult.then !== "function") {
+        console.warn("[Unbroken] RCPurchases.configure did not return a promise — RevenueCat plugin API may differ from expected.");
+        return Promise.resolve();
+      }
+      return configureResult.then(function () {
+        return refreshCompanionAccess();
+      }).catch(function (e) {
+        console.warn("[Unbroken] RevenueCat configure failed:", e);
+      });
+    } catch (e) {
+      console.warn("[Unbroken] RevenueCat configure threw synchronously:", e);
+      return Promise.resolve();
+    }
   }
 
   function refreshCompanionAccess() {
