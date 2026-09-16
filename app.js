@@ -62,6 +62,25 @@
   // unlocked. Real enforcement only happens in the actual installed app.
   var isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   var RCPurchases = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases) || null;
+  var InAppReview = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppReview) || null;
+
+  function maybeRequestReview(day) {
+    if (!isNativeApp || !InAppReview) return;
+    if (day !== 7 && day !== 30) return;
+    if (localStorage.getItem("unbroken_review_requested")) return;
+    try {
+      var result = InAppReview.requestReview();
+      if (result && typeof result.catch === "function") {
+        result.catch(function (e) {
+          console.warn("[Unbroken] Review request failed:", e);
+        });
+      }
+      localStorage.setItem("unbroken_review_requested", "1");
+    } catch (e) {
+      console.warn("[Unbroken] Review request threw synchronously:", e);
+    }
+  }
+
   var COMPANION_ENTITLEMENT_ID = "companion_access";
   var COMPANION_PRODUCT_ID = "com.temujin67.unbroken.companion.lifetime";
   var hasCompanionAccess = !isNativeApp;
@@ -253,6 +272,7 @@
       localStorage.setItem("unbroken_done_dates", JSON.stringify(state.doneDates));
     }
     renderToday();
+    maybeRequestReview(programDay());
   });
 
   document.getElementById("saveTodayNoteBtn").addEventListener("click", function () {
