@@ -771,6 +771,8 @@
             appendBubble(row.content, cls);
           }
         });
+      }).catch(function (e) {
+        console.warn("Could not load chat history:", e);
       });
   }
 
@@ -1019,6 +1021,13 @@
   ensureAuth().then(function () {
     return Promise.all([loadReframes(), loadRightNow(), loadMaintenance(), loadChatHistory(), initRevenueCat()]);
   }).then(function () {
+    renderToday();
+    renderTracker();
+    renderTriggers();
+  }).catch(function (e) {
+    console.warn("Boot sequence failed:", e);
+    var title = document.getElementById("reframeTitle");
+    if (title) title.textContent = "DEBUG BOOT: " + (e && e.message ? e.message : String(e));
     renderToday();
     renderTracker();
     renderTriggers();
