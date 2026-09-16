@@ -170,10 +170,15 @@
   var reframes = [];
   var maintenanceItems = [];
   function loadReframes() {
-    return fetch("reframes.json").then(function (r) { return r.json(); }).then(function (data) {
+    return fetch("reframes.json").then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status + " " + r.statusText + " for reframes.json");
+      return r.json();
+    }).then(function (data) {
       reframes = data;
     }).catch(function (e) {
       console.warn("Could not load reframes:", e);
+      var title = document.getElementById("reframeTitle");
+      if (title) title.textContent = "DEBUG: " + (e && e.message ? e.message : String(e));
     });
   }
 
