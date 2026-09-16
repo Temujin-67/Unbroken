@@ -9,7 +9,8 @@
     "@capacitor/core": "latest",
     "@capacitor/ios": "latest",
     "@capacitor/android": "latest",
-    "@revenuecat/purchases-capacitor": "latest"
+    "@revenuecat/purchases-capacitor": "latest",
+    "@capacitor-community/in-app-review": "latest"
   },
   "devDependencies": {
     "@capacitor/cli": "latest",
