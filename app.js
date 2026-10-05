@@ -85,6 +85,23 @@
   var COMPANION_PRODUCT_ID = "com.temujin67.unbroken.companion.lifetime";
   var hasCompanionAccess = !isNativeApp;
 
+  // ---------- Free trial: 5 Companion messages in total, then the unlock screen ----------
+  var FREE_TRIAL_MESSAGES = 5;
+  var trialNoticeShown = false;
+  function freeMessagesUsed() {
+    return parseInt(localStorage.getItem("unbroken_free_used") || "0", 10);
+  }
+  function freeMessagesLeft() {
+    return Math.max(0, FREE_TRIAL_MESSAGES - freeMessagesUsed());
+  }
+  function useFreeMessage() {
+    localStorage.setItem("unbroken_free_used", String(freeMessagesUsed() + 1));
+  }
+  // Never lock someone out of an active safety conversation.
+  function canUseCompanion() {
+    return hasCompanionAccess || freeMessagesLeft() > 0 || isSafetyActive();
+  }
+
   function initRevenueCat() {
     if (!isNativeApp) return Promise.resolve();
     if (!RCPurchases) {
@@ -779,7 +796,7 @@
   // The client never supplies the system prompt — only conversation messages and
   // labeled-as-data dynamic context are sent; the server builds the authoritative prompt.
 
-  var CRISIS_PATTERN = /\b(suicid|kill myself|end my life|self.?harm|hurt myself|want to die|no reason to live|point (in|of) living|not worth living|can'?t go on|give up on (life|living)|end it all|no point in )\b/i;
+  var CRISIS_PATTERN = /\b(suicid\w*|kill(ing)? myself|end(ing)? my life|take my (own )?life|self.?harm\w*|hurt(ing)? myself|want to die|wanna die|better off dead|no reason to (live|go on)|not worth living|can'?t go on|how (can|do) i go on|don'?t want to (live|be here|exist)|life (has|had) no (meaning|point)|give up on (life|living)|end it all|no point in )\b/i;
   var CRISIS_MESSAGE = "That sounds like a lot to carry alone right now. Please reach out to a crisis line — you can find one for your country at findahelpline.com — or contact your local emergency number, or someone you trust, right now. I'll stay here with you, but this needs a real person today. Not eventually.";
 
   var chatHistory = [];
@@ -865,6 +882,12 @@
     var text = input.value.trim();
     if (!text) return;
 
+    var trialTestMode = /[?&]testmode=1\b/.test(window.location.search);
+    if (!hasCompanionAccess && !isSafetyActive() && !trialTestMode && !CRISIS_PATTERN.test(text) && freeMessagesLeft() <= 0) {
+      showView("companion");
+      return;
+    }
+
     appendBubble(text, "user");
     input.value = "";
 
@@ -880,6 +903,7 @@
 
     var inSafety = isSafetyActive();
     var testMode = /[?&]testmode=1\b/.test(window.location.search);
+    var onTrial = !hasCompanionAccess && !inSafety && !testMode;
 
     if (!inSafety && !testMode && state.chatCount >= DAILY_CHAT_LIMIT) {
       appendBubble("You've reached today's Companion limit. Your journal, tools, and exercises are still available. The Companion resets tomorrow.", "bot");
@@ -925,6 +949,7 @@
       }
 
       var reply = (data.content || []).map(function (b) { return b.text || ""; }).join("").trim();
+      var gotReply = !!reply;
       if (!reply) {
         reply = "Something went wrong on my end. Try again in a moment.";
       }
@@ -946,6 +971,13 @@
       saveChatMessage("assistant", reply);
       placeholder.textContent = reply;
       placeholder.className = "chat-bubble bot";
+
+      if (onTrial && gotReply) {
+        useFreeMessage();
+        if (freeMessagesLeft() === 0) {
+          appendBubble("That was your last free Companion message. Your journal, tracker and daily practice stay free.", "bot");
+        }
+      }
     }).catch(function () {
       placeholder.textContent = "Couldn't reach the companion right now. This demo version needs a live connection — in the real app this runs through a secure backend.";
       placeholder.className = "chat-bubble bot";
@@ -964,13 +996,51 @@
   var views = document.querySelectorAll(".view");
 
   function showView(name) {
-    var visibleName = (name === "companion" && !hasCompanionAccess) ? "paywall" : name;
+    var visibleName = (name === "companion" && !canUseCompanion()) ? "paywall" : name;
     views.forEach(function (v) {
       v.classList.toggle("hidden", v.dataset.view !== visibleName);
     });
     tabs.forEach(function (t) {
       t.classList.toggle("active", t.dataset.target === name);
     });
+    if (visibleName === "paywall") preparePaywall();
+    if (visibleName === "companion" && isNativeApp && !hasCompanionAccess && !trialNoticeShown && freeMessagesLeft() > 0) {
+      trialNoticeShown = true;
+      var left = freeMessagesLeft();
+      appendBubble("You have " + left + " free message" + (left === 1 ? "" : "s") + " to try the Companion.", "bot");
+    }
+  }
+
+  // On iPhone, if Apple returns no product (e.g. agreement still pending), show "Coming soon"
+  // instead of an error. Once the product loads, the normal Unlock button works with no update.
+  var paywallChecked = false;
+  function preparePaywall() {
+    var btn = document.getElementById("subscribeBtn");
+    if (freeMessagesUsed() >= FREE_TRIAL_MESSAGES) {
+      showPaywallMessage("You've used your " + FREE_TRIAL_MESSAGES + " free messages.");
+    }
+    if (!btn || !isNativeApp || !RCPurchases || paywallChecked) return;
+    var platform = window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "";
+    if (platform !== "ios") return;
+    paywallChecked = true;
+    try {
+      var check = RCPurchases.getProducts({ productIdentifiers: [COMPANION_PRODUCT_ID] });
+      if (!check || typeof check.then !== "function") { paywallChecked = false; return; }
+      check.then(function (res) {
+        var products = (res && res.products) || [];
+        if (!products.length) {
+          btn.disabled = true;
+          btn.textContent = "Coming soon";
+          showPaywallMessage("Unlocking the Companion is coming soon on iPhone. Your journal, tracker and daily practice stay free.");
+        }
+      }).catch(function (e) {
+        console.warn("[Unbroken] Paywall product check failed:", e);
+        paywallChecked = false;
+      });
+    } catch (e) {
+      console.warn("[Unbroken] Paywall product check threw:", e);
+      paywallChecked = false;
+    }
   }
 
   tabs.forEach(function (t) {
