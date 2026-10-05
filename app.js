@@ -877,6 +877,53 @@
     log.scrollTop = log.scrollHeight;
   }
 
+  // Free messages used up: never pull the person out of the chat. A small server-side check
+  // decides whether the message shows any risk (typos and indirect wording included).
+  // Risk -> crisis message + safety window (they can keep talking). Otherwise, or if the
+  // check fails -> a reply that still includes crisis help and how to unlock.
+  var LOCKED_MESSAGE = "You've used your 5 free Companion messages. If you're struggling right now, contact your local emergency number or find a crisis line at findahelpline.com. To keep talking here, tap the Companion tab again to unlock.";
+
+  function handleLockedMessage(text) {
+    var input = document.getElementById("chatInput");
+    appendBubble(text, "user");
+    input.value = "";
+    appendBubble("\u2026", "bot");
+    var log = document.getElementById("chatLog");
+    var placeholder = log.lastChild;
+
+    function showLocked() {
+      placeholder.textContent = LOCKED_MESSAGE;
+      placeholder.className = "chat-bubble bot";
+    }
+
+    if (!currentAccessToken) { showLocked(); return; }
+
+    fetch(cfg.supabaseUrl + "/functions/v1/companion-chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + currentAccessToken,
+        "apikey": cfg.supabasePublishableKey
+      },
+      body: JSON.stringify({ mode: "safety_check", text: text })
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (data && data.risk === true) {
+        activateSafetyWindow();
+        saveChatMessage("user", text);
+        chatHistory.push({ role: "user", content: text });
+        placeholder.textContent = CRISIS_MESSAGE;
+        placeholder.className = "chat-bubble crisis";
+        chatHistory.push({ role: "assistant", content: CRISIS_MESSAGE });
+        saveChatMessage("assistant", CRISIS_MESSAGE);
+      } else {
+        showLocked();
+      }
+    }).catch(function (e) {
+      console.warn("[Unbroken] Safety check failed:", e);
+      showLocked();
+    });
+  }
+
   function sendChatMessage() {
     var input = document.getElementById("chatInput");
     var text = input.value.trim();
@@ -884,7 +931,7 @@
 
     var trialTestMode = /[?&]testmode=1\b/.test(window.location.search);
     if (!hasCompanionAccess && !isSafetyActive() && !trialTestMode && !CRISIS_PATTERN.test(text) && freeMessagesLeft() <= 0) {
-      showView("companion");
+      handleLockedMessage(text);
       return;
     }
 
