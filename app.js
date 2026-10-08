@@ -1071,7 +1071,7 @@
     if (platform !== "ios") return;
     paywallChecked = true;
     try {
-      var check = RCPurchases.getProducts({ productIdentifiers: [COMPANION_PRODUCT_ID] });
+      var check = RCPurchases.getProducts({ productIdentifiers: [COMPANION_PRODUCT_ID], type: "NON_SUBSCRIPTION" });
       if (!check || typeof check.then !== "function") { paywallChecked = false; return; }
       check.then(function (res) {
         var products = (res && res.products) || [];
@@ -1115,7 +1115,7 @@
       return;
     }
     subscribeBtn.disabled = true;
-    RCPurchases.getProducts({ productIdentifiers: [COMPANION_PRODUCT_ID] }).then(function (res) {
+    RCPurchases.getProducts({ productIdentifiers: [COMPANION_PRODUCT_ID], type: "NON_SUBSCRIPTION" }).then(function (res) {
       var products = (res && res.products) || [];
       if (!products.length) {
         var diag3 = "DEBUG — requested: " + COMPANION_PRODUCT_ID +
