@@ -806,12 +806,12 @@
     return supabase.from("chat_messages")
       .select("role, content, created_at")
       .eq("user_id", currentUserId)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(60)
       .then(function (res) {
         if (res.error || !res.data) return;
         var log = document.getElementById("chatLog");
-        res.data.forEach(function (row) {
+        res.data.slice().reverse().forEach(function (row) {
           chatHistory.push({ role: row.role, content: row.content });
           if (log) {
             var cls = row.role === "user" ? "user" : "bot";
@@ -1014,8 +1014,10 @@
         reply += " [cut off — ask again for the rest]";
       }
 
-      chatHistory.push({ role: "assistant", content: reply });
-      saveChatMessage("assistant", reply);
+      if (gotReply) {
+        chatHistory.push({ role: "assistant", content: reply });
+        saveChatMessage("assistant", reply);
+      }
       placeholder.textContent = reply;
       placeholder.className = "chat-bubble bot";
 
@@ -1026,7 +1028,7 @@
         }
       }
     }).catch(function () {
-      placeholder.textContent = "Couldn't reach the companion right now. This demo version needs a live connection — in the real app this runs through a secure backend.";
+      placeholder.textContent = "Couldn't reach the Companion right now. Check your connection and try again.";
       placeholder.className = "chat-bubble bot";
     });
   }
