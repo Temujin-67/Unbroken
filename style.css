@@ -644,6 +644,10 @@ html, body {
   border-bottom-right-radius: 4px;
 }
 
+.chat-bubble.intro p {
+  margin: 6px 0 0;
+}
+
 .chat-bubble.crisis {
   background: rgba(140,74,59,0.15);
   border: 1px solid var(--rust);

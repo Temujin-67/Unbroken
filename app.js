@@ -869,6 +869,35 @@
     localStorage.setItem("unbroken_companion_stage_stats", JSON.stringify(stats));
   }
 
+  // Shown once, right after the user's first Companion message, while the reply is loading.
+  // Fixed app text: free, not counted as a message, never sent to the AI or saved to chat history.
+  function showCompanionIntroOnce() {
+    try {
+      if (localStorage.getItem("unbroken_companion_intro_shown") === "1") return;
+      localStorage.setItem("unbroken_companion_intro_shown", "1");
+    } catch (e) { return; }
+    var log = document.getElementById("chatLog");
+    if (!log) return;
+    var lines = [
+      "It's direct. It won't flatter you or just tell you what you want to hear. It separates what happened from the story around it.",
+      "It remembers your past conversations, so you don't have to repeat yourself.",
+      "It's not therapy and not a crisis service. If you're in danger, it will point you to real help."
+    ];
+    lines.push("Your answer is coming below.");
+    var div = document.createElement("div");
+    div.className = "chat-bubble bot intro";
+    var title = document.createElement("strong");
+    title.textContent = "How the Companion works";
+    div.appendChild(title);
+    lines.forEach(function (t) {
+      var para = document.createElement("p");
+      para.textContent = t;
+      div.appendChild(para);
+    });
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
   function appendBubble(text, cls) {
     var log = document.getElementById("chatLog");
     if (!log) return;
@@ -972,6 +1001,7 @@
       return;
     }
 
+    showCompanionIntroOnce();
     appendBubble("…", "bot");
     var log = document.getElementById("chatLog");
     var placeholder = log.lastChild;
