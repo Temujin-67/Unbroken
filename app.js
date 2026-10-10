@@ -83,7 +83,9 @@
 
   var COMPANION_ENTITLEMENT_ID = "companion_access";
   var COMPANION_PRODUCT_ID = "com.temujin67.unbroken.companion.lifetime";
-  var hasCompanionAccess = !isNativeApp;
+  // Web gets the same 5-message trial as the apps. Add ?testmode=1 to the web address for unlimited testing.
+  var hasCompanionAccess = /[?&]testmode=1\b/.test(window.location.search);
+  var PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.temujin67.unbroken";
 
   // ---------- Free trial: 5 Companion messages in total, then the unlock screen ----------
   var FREE_TRIAL_MESSAGES = 5;
@@ -1053,7 +1055,7 @@
       t.classList.toggle("active", t.dataset.target === name);
     });
     if (visibleName === "paywall") preparePaywall();
-    if (visibleName === "companion" && isNativeApp && !hasCompanionAccess && !trialNoticeShown && freeMessagesLeft() > 0) {
+    if (visibleName === "companion" && !hasCompanionAccess && !trialNoticeShown && freeMessagesLeft() > 0) {
       trialNoticeShown = true;
       var left = freeMessagesLeft();
       appendBubble("You have " + left + " free message" + (left === 1 ? "" : "s") + " to try the Companion.", "bot");
@@ -1067,6 +1069,15 @@
     var btn = document.getElementById("subscribeBtn");
     if (freeMessagesUsed() >= FREE_TRIAL_MESSAGES) {
       showPaywallMessage("You've used your " + FREE_TRIAL_MESSAGES + " free messages.");
+    }
+    if (btn && !isNativeApp) {
+      // Web: no purchases here, point to the app instead.
+      btn.textContent = "Get the app on Google Play";
+      var restoreBtnWeb = document.getElementById("restorePurchasesBtn");
+      if (restoreBtnWeb) restoreBtnWeb.classList.add("hidden");
+      showPaywallMessage((freeMessagesUsed() >= FREE_TRIAL_MESSAGES ? "You've used your " + FREE_TRIAL_MESSAGES + " free messages. " : "") +
+        "Unlimited Companion is available in the app. Your journal, tracker and daily practice stay free here.");
+      return;
     }
     if (!btn || !isNativeApp || !RCPurchases || paywallChecked) return;
     var platform = window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "";
@@ -1107,7 +1118,11 @@
 
   var subscribeBtn = document.getElementById("subscribeBtn");
   if (subscribeBtn) subscribeBtn.addEventListener("click", function () {
-    if (!isNativeApp || !RCPurchases) {
+    if (!isNativeApp) {
+      window.open(PLAY_STORE_URL, "_blank");
+      return;
+    }
+    if (!RCPurchases) {
       var diag = "DEBUG — isNativeApp: " + isNativeApp +
         " | Capacitor exists: " + !!window.Capacitor +
         " | platform: " + (window.Capacitor && window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "?") +
