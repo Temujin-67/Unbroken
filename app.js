@@ -879,17 +879,17 @@
     var log = document.getElementById("chatLog");
     if (!log) return;
     var lines = [
-      "It runs on AI, but it's built for one job: getting through a breakup, the Stoic way.",
-      "Unlike a general chatbot, it knows where you are (your day, your no-contact streak, your urges, your personal code) and remembers what you've told it.",
-      "It won't flatter you or tell you what you want to hear. It helps you separate what happened from the story you're telling yourself.",
-      "It works best with facts: what happened, what was said, what you're tempted to do.",
-      "It's not therapy or a crisis service. If you're in danger, it will point you to real help."
+      "Not a chatbot that tells you what you want to hear. A clear voice for the moments you'd otherwise text them, spiral, or lie awake.",
+      "It already knows your day, your streak and your code, and it remembers what you tell it. No starting over.",
+      "It cuts through the story your head is telling you and brings you back to what's actually in your control.",
+      "Give it facts (what happened, what was said, what you want to do) and it gives you something you can act on tonight.",
+      "It's not therapy or a crisis service. If you're in danger, it points you to real help."
     ];
     lines.push("Your answer is coming below.");
     var div = document.createElement("div");
     div.className = "chat-bubble bot intro";
     var title = document.createElement("strong");
-    title.textContent = "How the Companion works";
+    title.textContent = "Your Companion";
     div.appendChild(title);
     lines.forEach(function (t) {
       var para = document.createElement("p");
