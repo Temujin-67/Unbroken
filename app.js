@@ -879,8 +879,9 @@
     var log = document.getElementById("chatLog");
     if (!log) return;
     var lines = [
-      "It's an AI. It's direct: no flattery, no therapy-speak. It helps you separate what happened from the story you're telling yourself.",
-      "It remembers what you've told it, so you don't have to start over.",
+      "It runs on AI, but it's built for one job: getting through a breakup, the Stoic way.",
+      "Unlike a general chatbot, it knows where you are (your day, your no-contact streak, your urges, your personal code) and remembers what you've told it.",
+      "It won't flatter you or tell you what you want to hear. It helps you separate what happened from the story you're telling yourself.",
       "It works best with facts: what happened, what was said, what you're tempted to do.",
       "It's not therapy or a crisis service. If you're in danger, it will point you to real help."
     ];
