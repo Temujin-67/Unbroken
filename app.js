@@ -879,9 +879,10 @@
     var log = document.getElementById("chatLog");
     if (!log) return;
     var lines = [
-      "It's direct. It won't flatter you or just tell you what you want to hear. It separates what happened from the story around it.",
-      "It remembers your past conversations, so you don't have to repeat yourself.",
-      "It's not therapy and not a crisis service. If you're in danger, it will point you to real help."
+      "It's an AI. It's direct: no flattery, no therapy-speak. It helps you separate what happened from the story you're telling yourself.",
+      "It remembers what you've told it, so you don't have to start over.",
+      "It works best with facts: what happened, what was said, what you're tempted to do.",
+      "It's not therapy or a crisis service, and it can be wrong. If you're in danger, it will point you to real help."
     ];
     lines.push("Your answer is coming below.");
     var div = document.createElement("div");
