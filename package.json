@@ -1,7 +1,7 @@
 {
   "name": "unbroken",
   "version": "1.0.0",
-  "description": "Unbroken — Stoic breakup recovery app",
+  "description": "So Be It — Stoic breakup recovery app",
   "scripts": {
     "sync": "cap sync"
   },
