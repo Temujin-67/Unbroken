@@ -86,6 +86,9 @@
   // Web gets the same 5-message trial as the apps. Add ?testmode=1 to the web address for unlimited testing.
   var hasCompanionAccess = /[?&]testmode=1\b/.test(window.location.search);
   var PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.temujin67.unbroken";
+  // iPhone sales switch (config.js). While off, the iPhone paywall shows "Coming soon" with no buy option.
+  var IOS_SALES_OFF = isNativeApp && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "ios" &&
+    !(cfg && cfg.iosPurchasesEnabled === true);
 
   // ---------- Free trial: 5 Companion messages in total, then the unlock screen ----------
   var FREE_TRIAL_MESSAGES = 5;
@@ -914,7 +917,10 @@
   // decides whether the message shows any risk (typos and indirect wording included).
   // Risk -> crisis message + safety window (they can keep talking). Otherwise, or if the
   // check fails -> a reply that still includes crisis help and how to unlock.
-  var LOCKED_MESSAGE = "You've used your 5 free Companion messages. If you're struggling right now, contact your local emergency number or find a crisis line at findahelpline.com. To keep talking here, tap the Companion tab again to unlock.";
+  var LOCKED_MESSAGE = "You've used your 5 free Companion messages. If you're struggling right now, contact your local emergency number or find a crisis line at findahelpline.com. " +
+    (IOS_SALES_OFF
+      ? "Unlimited Companion is coming soon on iPhone. Your journal, tracker and daily practice stay free."
+      : "To keep talking here, tap the Companion tab again to unlock.");
 
   function handleLockedMessage(text) {
     var input = document.getElementById("chatInput");
@@ -1111,6 +1117,20 @@
         "Unlimited Companion is available in the app. Your journal, tracker and daily practice stay free here.");
       return;
     }
+    if (btn && IOS_SALES_OFF) {
+      // iPhone sales not switched on yet: no price, no buy button, no restore.
+      btn.disabled = true;
+      btn.textContent = "Coming soon";
+      var restoreBtnIos = document.getElementById("restorePurchasesBtn");
+      if (restoreBtnIos) restoreBtnIos.classList.add("hidden");
+      var titleEl = document.querySelector("#view-paywall .reframe-title");
+      if (titleEl) titleEl.textContent = "Companion: coming soon";
+      var priceEl = document.querySelector("#view-paywall .action-text");
+      if (priceEl) priceEl.textContent = "Unlimited Companion access is coming soon on iPhone.";
+      showPaywallMessage((freeMessagesUsed() >= FREE_TRIAL_MESSAGES ? "You've used your " + FREE_TRIAL_MESSAGES + " free messages. " : "") +
+        "Your journal, tracker and daily practice stay free.");
+      return;
+    }
     if (!btn || !isNativeApp || !RCPurchases || paywallChecked) return;
     var platform = window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "";
     if (platform !== "ios") return;
@@ -1150,6 +1170,7 @@
 
   var subscribeBtn = document.getElementById("subscribeBtn");
   if (subscribeBtn) subscribeBtn.addEventListener("click", function () {
+    if (IOS_SALES_OFF) return;
     if (!isNativeApp) {
       window.open(PLAY_STORE_URL, "_blank");
       return;
