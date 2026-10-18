@@ -758,6 +758,12 @@ html, body {
 .tab.active {
   color: var(--bronze);
   font-weight: 600;
+  box-shadow: inset 0 2px 0 var(--bronze);
+}
+
+.tab-companion {
+  color: #DEA368;
+  font-weight: 600;
 }
 
 .companion-nudge-btn { margin-top: 10px; width: 100%; }
