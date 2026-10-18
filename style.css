@@ -759,3 +759,5 @@ html, body {
   color: var(--bronze);
   font-weight: 600;
 }
+
+.companion-nudge-btn { margin-top: 10px; width: 100%; }

@@ -117,6 +117,7 @@
           <p class="urge-card-title">Write what you want to say. It stays here — nothing sends.</p>
           <textarea id="urgeDraftText" class="urge-draft" placeholder="Write it out."></textarea>
           <button class="btn-primary" id="startHoldBtn">Start 30-minute hold</button>
+          <button class="btn-ghost companion-nudge-btn" id="urgeTalkBtn">Talk it through with the Companion instead</button>
         </div>
 
         <div class="urge-card hidden" id="urgeHoldingCard">
@@ -130,6 +131,7 @@
             <button class="btn-ghost" id="gladWaitedBtn">No — glad I waited</button>
             <button class="btn-danger" id="stillWantBtn">Still want to send it</button>
           </div>
+          <button class="btn-ghost companion-nudge-btn" id="revisitTalkBtn">Talk it through with the Companion first</button>
         </div>
 
         <div class="urge-log">
@@ -169,6 +171,10 @@
         <textarea id="journalEntry" placeholder="Write here. No one grades this."></textarea>
         <button class="btn-primary" id="saveJournalBtn">Save entry</button>
         <div id="journalSaved" class="saved-note hidden">Saved.</div>
+        <div class="urge-card hidden" id="journalTalkCard">
+          <p class="urge-card-title">Want an honest second view on what you wrote?</p>
+          <button class="btn-ghost companion-nudge-btn" id="journalTalkBtn">Talk it through with the Companion</button>
+        </div>
 
         <div class="recap-block">
           <p class="eyebrow">Evening recap</p>

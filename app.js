@@ -403,6 +403,31 @@
     hideAllUrgeCards();
   });
 
+  // ---------- Companion nudges: open the Companion with a first message ready ----------
+  function openCompanionWith(text) {
+    showView("companion");
+    var input = document.getElementById("chatInput");
+    if (input && text && !input.value.trim()) input.value = text;
+    if (input && !input.closest(".hidden")) { try { input.focus(); } catch (e) {} }
+  }
+
+  document.getElementById("urgeTalkBtn").addEventListener("click", function () {
+    var draft = document.getElementById("urgeDraftText").value.trim();
+    hideAllUrgeCards();
+    openCompanionWith(draft
+      ? "I want to text my ex right now. This is what I want to send: \"" + draft.slice(0, 400) + "\""
+      : "I want to text my ex right now.");
+  });
+
+  document.getElementById("revisitTalkBtn").addEventListener("click", function () {
+    var hold = getUrgeHold();
+    setUrgeHold(null);
+    hideAllUrgeCards();
+    openCompanionWith(hold && hold.text
+      ? "I waited 30 minutes and I still want to send this to my ex: \"" + hold.text.slice(0, 400) + "\""
+      : "I waited 30 minutes and I still want to text my ex.");
+  });
+
   setInterval(renderUrgeArea, 60000);
 
   // ---------- Tracker ----------
@@ -489,9 +514,19 @@
     }
 
     document.getElementById("journalEntry").value = "";
+    lastJournalText = text;
+    document.getElementById("journalTalkCard").classList.remove("hidden");
     var saved = document.getElementById("journalSaved");
     saved.classList.remove("hidden");
     setTimeout(function () { saved.classList.add("hidden"); }, 2000);
+  });
+
+  var lastJournalText = "";
+  document.getElementById("journalTalkBtn").addEventListener("click", function () {
+    document.getElementById("journalTalkCard").classList.add("hidden");
+    openCompanionWith(lastJournalText
+      ? "I just wrote this in my journal: \"" + lastJournalText.slice(0, 500) + "\" What am I not seeing?"
+      : "I just wrote in my journal and want to talk it through.");
   });
 
   document.getElementById("saveRecapBtn").addEventListener("click", function () {
