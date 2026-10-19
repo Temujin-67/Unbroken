@@ -27,8 +27,45 @@
 
   var authDebugInfo = "ensureAuth not yet run";
 
+  // Backup login without the Supabase library (for older phones where it fails to load).
+  // Keeps the Companion working: it only needs an access token.
+  function rawAnonymousAuth() {
+    var c = window.UNBROKEN_CONFIG;
+    if (!c || !window.fetch) { authDebugInfo += "raw auth unavailable"; return Promise.resolve(null); }
+    var headers = { "Content-Type": "application/json", "apikey": c.supabasePublishableKey };
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem("sobeit_raw_session") || "null"); } catch (e) {}
+    function keep(data, how) {
+      if (!data || !data.access_token || !data.user) throw new Error("no session in response");
+      var sess = { access_token: data.access_token, refresh_token: data.refresh_token, user_id: data.user.id,
+        expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600) };
+      try { localStorage.setItem("sobeit_raw_session", JSON.stringify(sess)); } catch (e) {}
+      currentUserId = sess.user_id;
+      currentAccessToken = sess.access_token;
+      authDebugInfo += how;
+      return currentUserId;
+    }
+    function signUp() {
+      return fetch(c.supabaseUrl + "/auth/v1/signup", { method: "POST", headers: headers, body: "{}" })
+        .then(function (r) { return r.json(); }).then(function (d) { return keep(d, "raw signup ok"); });
+    }
+    var p;
+    if (saved && saved.access_token && saved.expires_at > Math.floor(Date.now() / 1000) + 60) {
+      currentUserId = saved.user_id; currentAccessToken = saved.access_token; authDebugInfo += "raw session reused";
+      p = Promise.resolve(currentUserId);
+    } else if (saved && saved.refresh_token) {
+      p = fetch(c.supabaseUrl + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: headers, body: JSON.stringify({ refresh_token: saved.refresh_token }) })
+        .then(function (r) { return r.json(); }).then(function (d) { return keep(d, "raw refresh ok"); })
+        .catch(function () { return signUp(); });
+    } else {
+      p = signUp();
+    }
+    return p.catch(function (e) { authDebugInfo += "raw auth failed: " + (e && e.message ? e.message : e); return null; });
+  }
+
+
   function ensureAuth() {
-    if (!supabase) { authDebugInfo = "supabase client is null (init failed or window.supabase/UNBROKEN_CONFIG missing)"; return Promise.resolve(null); }
+    if (!supabase) { authDebugInfo = "supabase client is null; "; return rawAnonymousAuth(); }
     return supabase.auth.getSession().then(function (res) {
       if (res.error) { authDebugInfo = "getSession error: " + res.error.message; }
       if (res.data.session) {
