@@ -1275,8 +1275,46 @@
     });
   });
 
+  // ---------- Open counter (works even if login fails) ----------
+  var APP_BUILD = "__APP_BUILD__";
+  var openLogged = false;
+  function logAppOpen() {
+    if (openLogged) return;
+    openLogged = true;
+    try {
+      var deviceId = localStorage.getItem("sobeit_device_id");
+      var firstOpen = !deviceId;
+      if (!deviceId) {
+        deviceId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2));
+        localStorage.setItem("sobeit_device_id", deviceId);
+      }
+      var tz = "";
+      try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
+      var row = {
+        device_id: deviceId.slice(0, 64),
+        first_open: firstOpen,
+        tz: tz.slice(0, 64),
+        lang: (navigator.language || "").slice(0, 32),
+        platform: isNativeApp ? (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "native") : "web",
+        build: APP_BUILD.slice(0, 16),
+        auth_status: String(authDebugInfo).slice(0, 120),
+        user_id: currentUserId || null
+      };
+      var headers = { "Content-Type": "application/json", "apikey": cfg.supabasePublishableKey, "Prefer": "return=minimal" };
+      if (currentAccessToken) headers["Authorization"] = "Bearer " + currentAccessToken;
+      fetch(cfg.supabaseUrl + "/rest/v1/app_opens", { method: "POST", headers: headers, body: JSON.stringify(row) })
+        .catch(function (e) { console.warn("[So Be It] open log failed:", e); });
+    } catch (e) {
+      console.warn("[So Be It] open log error:", e);
+    }
+  }
+  setTimeout(logAppOpen, 10000);
+
   // ---------- Boot ----------
-  ensureAuth().then(function () {
+  ensureAuth().then(function (uid) {
+    logAppOpen();
+    return uid;
+  }).then(function () {
     return Promise.all([loadReframes(), loadRightNow(), loadMaintenance(), loadChatHistory(), initRevenueCat()]);
   }).then(function () {
     renderToday();

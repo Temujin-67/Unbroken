@@ -21,7 +21,8 @@ jobs:
       - name: Prepare web assets
         run: |
           mkdir -p www
-          cp app.js index.html style.css config.js www/
+          cp app.js index.html style.css config.js supabase.js www/
+          sed -i.bak "s/__APP_BUILD__/${{ github.run_number }}/" www/app.js && rm -f www/app.js.bak
           cp maintenance.json reframes.json right_now.json www/
           [ -d assets ] && cp -r assets www/ || true
 
