@@ -404,19 +404,29 @@
   });
 
   // ---------- Companion nudges: open the Companion with a first message ready ----------
-  function openCompanionWith(text) {
+  function openCompanionWith(text, where) {
+    if (where) trackEvent("nudge_tap", where);
     showView("companion");
     var input = document.getElementById("chatInput");
     if (input && text && !input.value.trim()) input.value = text;
+    autoGrowChatInput();
+    updateChatStarters();
     if (input && !input.closest(".hidden")) { try { input.focus(); } catch (e) {} }
   }
+
+  document.getElementById("holdTalkBtn").addEventListener("click", function () {
+    var hold = getUrgeHold();
+    openCompanionWith(hold && hold.text
+      ? "I'm in the 30-minute hold and I still want to text my ex. This is what I wrote: \"" + hold.text.slice(0, 400) + "\""
+      : "I'm in the 30-minute hold and I still want to text my ex.", "hold_wait");
+  });
 
   document.getElementById("urgeTalkBtn").addEventListener("click", function () {
     var draft = document.getElementById("urgeDraftText").value.trim();
     hideAllUrgeCards();
     openCompanionWith(draft
       ? "I want to text my ex right now. This is what I want to send: \"" + draft.slice(0, 400) + "\""
-      : "I want to text my ex right now.");
+      : "I want to text my ex right now.", "urge_write");
   });
 
   document.getElementById("revisitTalkBtn").addEventListener("click", function () {
@@ -425,7 +435,7 @@
     hideAllUrgeCards();
     openCompanionWith(hold && hold.text
       ? "I waited 30 minutes and I still want to send this to my ex: \"" + hold.text.slice(0, 400) + "\""
-      : "I waited 30 minutes and I still want to text my ex.");
+      : "I waited 30 minutes and I still want to text my ex.", "revisit");
   });
 
   setInterval(renderUrgeArea, 60000);
@@ -452,6 +462,7 @@
     var btn = e.target.closest("button[data-reason]");
     if (!btn) return;
     var reason = btn.getAttribute("data-reason");
+    lastResetReason = reason;
 
     var reasons = JSON.parse(localStorage.getItem("unbroken_reset_reasons") || "[]");
     reasons.push({ reason: reason, created_at: new Date().toISOString() });
@@ -464,6 +475,11 @@
     document.getElementById("resetClassifyCard").classList.add("hidden");
     document.getElementById("resetMessage").classList.remove("hidden");
     renderTracker();
+  });
+
+  var lastResetReason = "";
+  document.getElementById("resetTalkBtn").addEventListener("click", function () {
+    openCompanionWith("I reached out to my ex today" + (lastResetReason ? " (" + lastResetReason.toLowerCase() + ")" : "") + ". Help me look at what happened.", "reset");
   });
 
   // ---------- View from above ----------
@@ -526,7 +542,7 @@
     document.getElementById("journalTalkCard").classList.add("hidden");
     openCompanionWith(lastJournalText
       ? "I just wrote this in my journal: \"" + lastJournalText.slice(0, 500) + "\" What am I not seeing?"
-      : "I just wrote in my journal and want to talk it through.");
+      : "I just wrote in my journal and want to talk it through.", "journal");
   });
 
   document.getElementById("saveRecapBtn").addEventListener("click", function () {
@@ -773,7 +789,14 @@
     });
   }
 
+  var currentRightNowItem = null;
+  document.getElementById("rightnowTalkBtn").addEventListener("click", function () {
+    var label = currentRightNowItem && currentRightNowItem.label ? currentRightNowItem.label : "";
+    openCompanionWith(label ? "Right now: " + label + ". It's still hard." : "It's still hard right now.", "rightnow");
+  });
+
   function showRightNowResponse(item) {
+    currentRightNowItem = item;
     document.getElementById("rightnowResponseText").textContent = item.response;
     document.getElementById("rightnowActionText").textContent = item.action;
     var box = document.getElementById("rightnowResponse");
@@ -1011,6 +1034,8 @@
 
     appendBubble(text, "user");
     input.value = "";
+    autoGrowChatInput();
+    trackEvent("msg_sent", hasCompanionAccess ? "unlocked" : ("free_" + (freeMessagesUsed() + 1)));
 
     if (CRISIS_PATTERN.test(text)) {
       activateSafetyWindow();
@@ -1038,6 +1063,7 @@
     }
 
     chatHistory.push({ role: "user", content: text });
+    updateChatStarters();
 
     if (!currentAccessToken) {
       appendBubble("The companion couldn't connect right now. Try again in a moment.", "bot");
@@ -1112,7 +1138,32 @@
   if (chatSendBtn) chatSendBtn.addEventListener("click", sendChatMessage);
   var chatInputEl = document.getElementById("chatInput");
   if (chatInputEl) chatInputEl.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") sendChatMessage();
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+  });
+  if (chatInputEl) chatInputEl.addEventListener("input", function () { autoGrowChatInput(); updateChatStarters(); });
+
+  function autoGrowChatInput() {
+    var el = document.getElementById("chatInput");
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight + 2, 140) + "px";
+  }
+
+  function updateChatStarters() {
+    var box = document.getElementById("chatStarters");
+    if (!box) return;
+    var input = document.getElementById("chatInput");
+    var hasUserMsg = chatHistory.some(function (m) { return m.role === "user"; });
+    box.classList.toggle("hidden", hasUserMsg || !!(input && input.value.trim()));
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".chat-starter"), function (b, i) {
+    b.addEventListener("click", function () {
+      var input = document.getElementById("chatInput");
+      input.value = b.textContent;
+      trackEvent("starter_tap", String(i + 1));
+      sendChatMessage();
+    });
   });
 
   // ---------- Tab navigation ----------
@@ -1127,7 +1178,8 @@
     tabs.forEach(function (t) {
       t.classList.toggle("active", t.dataset.target === name);
     });
-    if (visibleName === "paywall") preparePaywall();
+    if (visibleName === "paywall") { preparePaywall(); trackEvent("paywall_view", name); }
+    if (visibleName === "companion") { trackEvent("companion_view", ""); updateChatStarters(); setTimeout(autoGrowChatInput, 0); }
     if (visibleName === "companion" && !hasCompanionAccess && !trialNoticeShown && freeMessagesLeft() > 0) {
       trialNoticeShown = true;
       var left = freeMessagesLeft();
@@ -1220,6 +1272,7 @@
       return;
     }
     subscribeBtn.disabled = true;
+    trackEvent("purchase_tap", "");
     RCPurchases.getProducts({ productIdentifiers: [COMPANION_PRODUCT_ID], type: "NON_SUBSCRIPTION" }).then(function (res) {
       var products = (res && res.products) || [];
       if (!products.length) {
@@ -1237,7 +1290,7 @@
       return refreshCompanionAccess();
     }).then(function () {
       subscribeBtn.disabled = false;
-      if (hasCompanionAccess) showView("companion");
+      if (hasCompanionAccess) { trackEvent("purchase_done", ""); showView("companion"); }
     }).catch(function (e) {
       subscribeBtn.disabled = false;
       if (e && e.userCancelled) return;
@@ -1275,19 +1328,67 @@
     });
   });
 
+  // ---------- Companion intro card (Today, shown until used or dismissed) ----------
+  function renderCompanionIntro() {
+    var card = document.getElementById("companionIntroCard");
+    if (!card) return;
+    var dismissed = false;
+    try { dismissed = localStorage.getItem("sobeit_companion_intro_done") === "1"; } catch (e) {}
+    var used = hasCompanionAccess || freeMessagesUsed() > 0 || chatHistory.some(function (m) { return m.role === "user"; });
+    card.classList.toggle("hidden", dismissed || used);
+  }
+  function closeCompanionIntro() {
+    try { localStorage.setItem("sobeit_companion_intro_done", "1"); } catch (e) {}
+    document.getElementById("companionIntroCard").classList.add("hidden");
+  }
+  document.getElementById("companionIntroBtn").addEventListener("click", function () {
+    closeCompanionIntro();
+    openCompanionWith("", "intro_card");
+  });
+  document.getElementById("companionIntroDismiss").addEventListener("click", function () {
+    closeCompanionIntro();
+    trackEvent("intro_dismiss", "");
+  });
+
   // ---------- Open counter (works even if login fails) ----------
   var APP_BUILD = "__APP_BUILD__";
   var openLogged = false;
+  var deviceWasNew = false;
+  try { deviceWasNew = !localStorage.getItem("sobeit_device_id"); } catch (e) {}
+
+  function getDeviceId() {
+    var id = null;
+    try { id = localStorage.getItem("sobeit_device_id"); } catch (e) {}
+    if (!id) {
+      id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2));
+      try { localStorage.setItem("sobeit_device_id", id); } catch (e) {}
+    }
+    return id;
+  }
+
+  function platformName() {
+    return isNativeApp ? (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "native") : "web";
+  }
+
+  // Counts taps only (which button, which screen). Never sends what anyone writes.
+  function trackEvent(name, detail) {
+    try {
+      if (!cfg || !cfg.supabaseUrl) return;
+      var headers = { "Content-Type": "application/json", "apikey": cfg.supabasePublishableKey, "Prefer": "return=minimal" };
+      if (currentAccessToken) headers["Authorization"] = "Bearer " + currentAccessToken;
+      fetch(cfg.supabaseUrl + "/rest/v1/app_events", {
+        method: "POST", headers: headers,
+        body: JSON.stringify({ device_id: getDeviceId().slice(0, 64), event: String(name).slice(0, 40), detail: String(detail || "").slice(0, 80), build: APP_BUILD.slice(0, 16), platform: platformName() })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   function logAppOpen() {
     if (openLogged) return;
     openLogged = true;
     try {
-      var deviceId = localStorage.getItem("sobeit_device_id");
-      var firstOpen = !deviceId;
-      if (!deviceId) {
-        deviceId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2));
-        localStorage.setItem("sobeit_device_id", deviceId);
-      }
+      var deviceId = getDeviceId();
+      var firstOpen = deviceWasNew;
       var tz = "";
       try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
       var row = {
@@ -1295,7 +1396,7 @@
         first_open: firstOpen,
         tz: tz.slice(0, 64),
         lang: (navigator.language || "").slice(0, 32),
-        platform: isNativeApp ? (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "native") : "web",
+        platform: platformName(),
         build: APP_BUILD.slice(0, 16),
         auth_status: String(authDebugInfo).slice(0, 120),
         user_id: currentUserId || null
@@ -1318,6 +1419,7 @@
     return Promise.all([loadReframes(), loadRightNow(), loadMaintenance(), loadChatHistory(), initRevenueCat()]);
   }).then(function () {
     renderToday();
+    renderCompanionIntro();
     renderTracker();
     renderTriggers();
   }).catch(function (e) {

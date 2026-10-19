@@ -665,6 +665,11 @@ html, body {
 
 #chatInput {
   flex: 1;
+  resize: none;
+  min-height: 46px;
+  max-height: 140px;
+  line-height: 1.4;
+  overflow-y: auto;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -746,11 +751,12 @@ html, body {
 
 .tab {
   flex: 1;
+  white-space: nowrap;
   background: none;
   border: none;
   color: var(--slate);
   font-size: 12px;
-  padding: 12px 0 10px;
+  padding: 12px 2px 10px;
   font-family: inherit;
   cursor: pointer;
 }
@@ -767,3 +773,32 @@ html, body {
 }
 
 .companion-nudge-btn { margin-top: 10px; width: 100%; }
+
+@media (max-width: 400px) { .tab { font-size: 11px; } }
+
+.chat-input-row { align-items: flex-end; }
+
+.chat-starters { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 8px; }
+.chat-starters.hidden { display: none; }
+.chat-starter {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--bronze-dim);
+  color: var(--bone);
+  border-radius: 18px;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.chat-starter:active { background: var(--card); }
+
+.companion-intro-card { border-color: var(--bronze); margin-bottom: 18px; }
+.companion-intro-sub { color: var(--bone-dim); font-size: 14px; margin: -4px 0 14px; }
+.link-btn {
+  display: block; width: 100%; margin-top: 8px; background: none; border: none;
+  color: var(--slate); font-size: 13px; font-family: inherit; padding: 6px; cursor: pointer;
+}
+
+#chatInput { min-width: 0; width: 100%; box-sizing: border-box; }
+.chat-input-row .chat-send { flex: 0 0 auto; width: auto; }
