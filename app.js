@@ -1,6 +1,10 @@
 (function () {
   "use strict";
 
+  var APP_BUILD = "__APP_BUILD__";
+  var deviceWasNew = false;
+  try { deviceWasNew = !localStorage.getItem("sobeit_device_id"); } catch (e) {}
+
   // ---------- Mobile viewport height fix (iOS Safari dvh timing bug) ----------
   function setAppHeight() {
     document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
@@ -748,8 +752,19 @@
     });
   }
 
+  var onboardSeen = {};
+  function trackOnboard(step) {
+    if (onboardSeen[step]) return;
+    onboardSeen[step] = true;
+    trackEvent("onboard_step", step);
+  }
+
   function showNextOnboardStep() {
     hideAllOnboardSteps();
+    if (!disclaimerAccepted) trackOnboard("disclaimer");
+    else if (hasKids === null) trackOnboard("kids");
+    else if (!hasCode) trackOnboard("code");
+    else if (onboardSeen.disclaimer || onboardSeen.kids || onboardSeen.code) trackOnboard("done");
     if (!disclaimerAccepted) {
       document.getElementById("onboardOverlay").classList.remove("hidden");
       document.getElementById("onboardStep0").classList.remove("hidden");
@@ -792,7 +807,13 @@
   document.getElementById("saveCodeBtn").addEventListener("click", function () {
     var checked = document.querySelectorAll("#codeOptions input:checked");
     var values = Array.prototype.map.call(checked, function (c) { return c.value; });
-    if (values.length) localStorage.setItem("unbroken_code", JSON.stringify(values));
+    if (!values.length) {
+      trackEvent("onboard_code_empty", "");
+      var hint = document.getElementById("codeHint");
+      if (hint) hint.classList.remove("hidden");
+      return;
+    }
+    localStorage.setItem("unbroken_code", JSON.stringify(values));
     hasCode = localStorage.getItem("unbroken_code");
     showNextOnboardStep();
   });
@@ -1388,10 +1409,7 @@
   });
 
   // ---------- Open counter (works even if login fails) ----------
-  var APP_BUILD = "__APP_BUILD__";
   var openLogged = false;
-  var deviceWasNew = false;
-  try { deviceWasNew = !localStorage.getItem("sobeit_device_id"); } catch (e) {}
 
   function getDeviceId() {
     var id = null;
@@ -1410,10 +1428,11 @@
   // Counts taps only (which button, which screen). Never sends what anyone writes.
   function trackEvent(name, detail) {
     try {
-      if (!cfg || !cfg.supabaseUrl) return;
-      var headers = { "Content-Type": "application/json", "apikey": cfg.supabasePublishableKey, "Prefer": "return=minimal" };
+      var cfgNow = cfg || window.UNBROKEN_CONFIG;
+      if (!cfgNow || !cfgNow.supabaseUrl) return;
+      var headers = { "Content-Type": "application/json", "apikey": cfgNow.supabasePublishableKey, "Prefer": "return=minimal" };
       if (currentAccessToken) headers["Authorization"] = "Bearer " + currentAccessToken;
-      fetch(cfg.supabaseUrl + "/rest/v1/app_events", {
+      fetch(cfgNow.supabaseUrl + "/rest/v1/app_events", {
         method: "POST", headers: headers,
         body: JSON.stringify({ device_id: getDeviceId().slice(0, 64), event: String(name).slice(0, 40), detail: String(detail || "").slice(0, 80), build: APP_BUILD.slice(0, 16), platform: platformName() })
       }).catch(function () {});
