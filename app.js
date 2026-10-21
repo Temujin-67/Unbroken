@@ -759,23 +759,31 @@
     trackEvent("onboard_step", step);
   }
 
+  // The kids and code questions are asked from the second day on, not at first open.
+  function laterStepsDue() {
+    if (!disclaimerAccepted) return false;
+    var d = new Date(disclaimerAccepted);
+    return isNaN(d.getTime()) || d.toDateString() !== new Date().toDateString();
+  }
+
   function showNextOnboardStep() {
     hideAllOnboardSteps();
+    var due = laterStepsDue();
     if (!disclaimerAccepted) trackOnboard("disclaimer");
-    else if (hasKids === null) trackOnboard("kids");
-    else if (!hasCode) trackOnboard("code");
+    else if (due && hasKids === null) trackOnboard("kids");
+    else if (due && !hasCode) trackOnboard("code");
     else if (onboardSeen.disclaimer || onboardSeen.kids || onboardSeen.code) trackOnboard("done");
     if (!disclaimerAccepted) {
       document.getElementById("onboardOverlay").classList.remove("hidden");
       document.getElementById("onboardStep0").classList.remove("hidden");
       return;
     }
-    if (hasKids === null) {
+    if (due && hasKids === null) {
       document.getElementById("onboardOverlay").classList.remove("hidden");
       document.getElementById("onboardStep1").classList.remove("hidden");
       return;
     }
-    if (!hasCode) {
+    if (due && !hasCode) {
       document.getElementById("onboardOverlay").classList.remove("hidden");
       document.getElementById("onboardStep2").classList.remove("hidden");
       return;
