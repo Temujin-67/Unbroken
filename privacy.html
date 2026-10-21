@@ -60,13 +60,14 @@
   <li><strong>Journal and reflection entries.</strong> Anything you write in the Journal, Today's Move, Relationship Review, or similar tools is saved so you can look back on it.</li>
   <li><strong>Companion conversations.</strong> Messages you send to the Companion, and its replies, are saved so the Companion can remember context across sessions.</li>
   <li><strong>Tracker data.</strong> No-contact streak counts, urge logs, and reset reasons you select.</li>
+  <li><strong>App usage.</strong> Basic usage events — for example that the app was opened, which onboarding step was reached, or that a Companion message was sent — together with the app version, device time zone and language. These never include what you write.</li>
   <li><strong>Purchase status.</strong> If you purchase Companion Access, our payment provider (RevenueCat) and the relevant app store (Apple or Google) process your purchase. We receive confirmation of your purchase status, not your payment details.</li>
 </ul>
 
 <h2>What we don't collect</h2>
 <ul>
   <li>We do not require your name, email, or phone number to use the app.</li>
-  <li>We do not use advertising trackers, and we do not sell your data to anyone.</li>
+  <li>We do not sell your data to anyone. Your journal entries and Companion conversations are never shared with analytics or advertising services.</li>
   <li>We do not access your contacts, photos, or location.</li>
 </ul>
 
@@ -78,6 +79,7 @@
   <li><strong>Supabase</strong> — stores your data securely and handles anonymous authentication.</li>
   <li><strong>Anthropic</strong> — powers the Companion's AI responses. Your messages are sent to Anthropic's API to generate a reply; Anthropic's own privacy practices apply to that processing.</li>
   <li><strong>RevenueCat</strong> — manages purchase status for Companion Access.</li>
+  <li><strong>Google Analytics for Firebase</strong> (Android) — measures app usage events such as app opens and Companion use, and whether our ads on Google bring people who use the app. It uses an app-instance identifier and does not receive your entries or messages. Google's privacy policy applies: https://policies.google.com/privacy</li>
   <li><strong>ntfy.sh</strong> — delivers short notifications to the developer's phone during the early launch period (see below).</li>
   <li><strong>Apple App Store / Google Play</strong> — process payment if you purchase Companion Access. We never see your card details.</li>
 </ul>

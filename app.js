@@ -1425,8 +1425,25 @@
     return isNativeApp ? (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "native") : "web";
   }
 
+  // Firebase Analytics (Android only): lets Google Ads optimise for people who open and use the app.
+  var FIREBASE_EVENT_MAP = { msg_sent: "companion_message", nudge_tap: "companion_nudge", starter_tap: "companion_starter",
+    paywall_view: "paywall_view", purchase_tap: "purchase_tap", purchase_done: "companion_unlock" };
+  function firebaseLog(name, detail) {
+    try {
+      if (!isNativeApp || !window.Capacitor || !window.Capacitor.getPlatform || window.Capacitor.getPlatform() !== "android") return;
+      var fa = window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseAnalytics;
+      if (!fa) return;
+      var fbName = FIREBASE_EVENT_MAP[name];
+      if (name === "onboard_step" && detail === "done") fbName = "onboarding_complete";
+      if (!fbName) return;
+      var p = fa.logEvent({ name: fbName, params: { detail: String(detail || "").slice(0, 40), build: String(APP_BUILD) } });
+      if (p && p.catch) p.catch(function () {});
+    } catch (e) {}
+  }
+
   // Counts taps only (which button, which screen). Never sends what anyone writes.
   function trackEvent(name, detail) {
+    firebaseLog(name, detail);
     try {
       var cfgNow = cfg || window.UNBROKEN_CONFIG;
       if (!cfgNow || !cfgNow.supabaseUrl) return;

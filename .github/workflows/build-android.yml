@@ -16,7 +16,9 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install --no-save @capacitor-firebase/analytics@8.5.2
 
       - name: Prepare web assets
         run: |
@@ -35,6 +37,9 @@ jobs:
           cp icon.png resources/icon.png
           cp splash.png resources/splash.png
           npx capacitor-assets generate --android
+
+      - name: Add Firebase config
+        run: cp google-services.json android/app/google-services.json
 
       - name: Sync web assets
         run: npx cap sync android

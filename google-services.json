@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "968495397000",
+    "project_id": "so-be-it-9e666",
+    "storage_bucket": "so-be-it-9e666.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:968495397000:android:d9c976d52f69a8c564473d",
+        "android_client_info": {
+          "package_name": "com.temujin67.unbroken"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCY1ci9T2cpit5H2p_x8N4tduC2FyL5dB0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
