@@ -801,6 +801,11 @@
     localStorage.setItem("unbroken_disclaimer_accepted", new Date().toISOString());
     disclaimerAccepted = localStorage.getItem("unbroken_disclaimer_accepted");
     showNextOnboardStep();
+    // First open: land straight on the Companion, already asking a question.
+    if (document.getElementById("onboardOverlay").classList.contains("hidden")) {
+      showView("companion");
+      trackEvent("first_landing", "companion");
+    }
   });
 
   function answerOnboarding(val) {
