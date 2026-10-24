@@ -4,6 +4,12 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>So Be It</title>
+<script>
+  /* The app only runs inside the Android/iOS apps (served from localhost). The public website copy redirects to the store. */
+  if (location.hostname !== "localhost") {
+    location.replace("https://play.google.com/store/apps/details?id=com.temujin67.unbroken");
+  }
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="So Be It" />
