@@ -6,7 +6,7 @@
 <title>So Be It</title>
 <script>
   /* The app only runs inside the Android/iOS apps (served from localhost). The public website copy redirects to the store. */
-  if (location.hostname !== "localhost") {
+  if (location.hostname !== "localhost" && !/[?&]testmode=1/.test(location.search)) {
     location.replace("https://play.google.com/store/apps/details?id=com.temujin67.unbroken");
   }
 </script>
