@@ -18,7 +18,8 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
-          npm install --no-save @capacitor-firebase/analytics@8.5.2
+          # Must be saved to package.json (only on the build machine): Capacitor only links plugins listed there.
+          npm install @capacitor-firebase/analytics@8.5.2
 
       - name: Prepare web assets
         run: |
@@ -43,6 +44,11 @@ jobs:
 
       - name: Sync web assets
         run: npx cap sync android
+
+      - name: Check Firebase plugin is linked
+        run: |
+          grep -q "capacitor-firebase-analytics" android/capacitor.settings.gradle || { echo "::error::Firebase Analytics plugin not linked"; exit 1; }
+          echo "::notice::Firebase Analytics plugin linked"
 
       - name: Set version code
         run: |
