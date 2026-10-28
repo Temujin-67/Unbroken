@@ -1042,6 +1042,33 @@
     log.scrollTop = log.scrollHeight;
   }
 
+  // Shown in the chat once the free messages are used: the offer itself, with a button that opens
+  // the unlock screen directly (the person stays where they are; no hunting for the tab).
+  function appendUnlockOffer(reason) {
+    if (IOS_SALES_OFF) {
+      appendBubble("That was your last free Companion message. Unlimited Companion is coming soon on iPhone. Your journal, tracker and daily practice stay free.", "bot");
+      return;
+    }
+    var log = document.getElementById("chatLog");
+    if (!log) return;
+    var div = document.createElement("div");
+    div.className = "chat-bubble bot unlock-offer";
+    var p = document.createElement("p");
+    p.textContent = "That was your last free message. To keep talking, unlock the Companion: $9.99, one time, no subscription.";
+    var btn = document.createElement("button");
+    btn.className = "btn-primary unlock-offer-btn";
+    btn.textContent = "Unlock";
+    btn.addEventListener("click", function () {
+      trackEvent("offer_tap", reason);
+      showView("companion");
+    });
+    div.appendChild(p);
+    div.appendChild(btn);
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    trackEvent("offer_shown", reason);
+  }
+
   // Free messages used up: never pull the person out of the chat. A small server-side check
   // decides whether the message shows any risk (typos and indirect wording included).
   // Risk -> crisis message + safety window (they can keep talking). Otherwise, or if the
@@ -1049,9 +1076,10 @@
   var LOCKED_MESSAGE = "You've used your 5 free Companion messages. If you're struggling right now, contact your local emergency number or find a crisis line at findahelpline.com. " +
     (IOS_SALES_OFF
       ? "Unlimited Companion is coming soon on iPhone. Your journal, tracker and daily practice stay free."
-      : "To keep talking here, tap the Companion tab again to unlock.");
+      : "");
 
   function handleLockedMessage(text) {
+    trackEvent("locked_msg", "");
     var input = document.getElementById("chatInput");
     appendBubble(text, "user");
     input.value = "";
@@ -1060,8 +1088,9 @@
     var placeholder = log.lastChild;
 
     function showLocked() {
-      placeholder.textContent = LOCKED_MESSAGE;
+      placeholder.textContent = LOCKED_MESSAGE.trim();
       placeholder.className = "chat-bubble bot";
+      if (!IOS_SALES_OFF) appendUnlockOffer("locked");
     }
 
     if (!currentAccessToken) { showLocked(); return; }
@@ -1196,7 +1225,7 @@
       if (onTrial && gotReply) {
         useFreeMessage();
         if (freeMessagesLeft() === 0) {
-          appendBubble("That was your last free Companion message. Your journal, tracker and daily practice stay free.", "bot");
+          appendUnlockOffer("last_free");
         }
       }
     }).catch(function () {
@@ -1440,7 +1469,7 @@
 
   // Firebase Analytics (Android only): lets Google Ads optimise for people who open and use the app.
   var FIREBASE_EVENT_MAP = { msg_sent: "companion_message", nudge_tap: "companion_nudge", starter_tap: "companion_starter",
-    paywall_view: "paywall_view", purchase_tap: "purchase_tap", purchase_done: "companion_unlock" };
+    paywall_view: "paywall_view", offer_tap: "offer_tap", purchase_tap: "purchase_tap", purchase_done: "companion_unlock" };
   function firebaseLog(name, detail) {
     try {
       if (!isNativeApp || !window.Capacitor || !window.Capacitor.getPlatform || window.Capacitor.getPlatform() !== "android") return;

@@ -802,3 +802,7 @@ html, body {
 
 #chatInput { min-width: 0; width: 100%; box-sizing: border-box; }
 .chat-input-row .chat-send { flex: 0 0 auto; width: auto; }
+
+/* In-chat unlock offer after the free messages */
+.chat-bubble.unlock-offer p { margin: 0 0 10px; }
+.chat-bubble.unlock-offer .unlock-offer-btn { width: 100%; }
