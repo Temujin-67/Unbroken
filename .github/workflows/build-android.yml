@@ -50,6 +50,13 @@ jobs:
           grep -q "capacitor-firebase-analytics" android/capacitor.settings.gradle || { echo "::error::Firebase Analytics plugin not linked"; exit 1; }
           echo "::notice::Firebase Analytics plugin linked"
 
+      - name: Declare advertising ID permission (Play requires it; Firebase Analytics + Google Ads)
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          grep -q "permission.AD_ID" "$M" || sed -i 's#</manifest>#    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />\n</manifest>#' "$M"
+          grep -q "com.google.android.gms.permission.AD_ID" "$M" || { echo "::error::AD_ID permission missing from manifest"; exit 1; }
+          echo "::notice::AD_ID permission declared"
+
       - name: Set version code
         run: |
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
@@ -93,6 +100,13 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew bundleRelease
+
+      - name: Check AD_ID is in the final merged manifest
+        run: |
+          F=$(grep -rl "com.google.android.gms.permission.AD_ID" android/app/build/intermediates --include=AndroidManifest.xml | head -1)
+          [ -n "$F" ] || { echo "::error::AD_ID permission not in merged manifest"; exit 1; }
+          if grep -rl 'permission.AD_ID"[^>]*tools:node="remove"' android/app/build/intermediates --include=AndroidManifest.xml | grep -q .; then echo "::error::AD_ID removed by a library"; exit 1; fi
+          echo "::notice::AD_ID present in merged manifest: $F"
 
       - name: Name AAB with version
         run: cp android/app/build/outputs/bundle/release/app-release.aab so-be-it-${{ github.run_number }}.aab
