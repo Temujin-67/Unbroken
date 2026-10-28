@@ -58,20 +58,24 @@
     </div>
 
     <header class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+      </button>
       <span class="wordmark">So Be It</span>
-      <span class="day-pill" id="dayPill">Day 1</span>
+      <button class="day-pill" id="dayPill" aria-label="Today's lesson"><span class="day-dot"></span><span id="dayPillText">Day 1</span></button>
     </header>
+
+    <button class="practice-bar hidden" id="practiceBar">
+      <span class="practice-bar-label" id="practiceBarLabel">Today's practice</span>
+      <span class="practice-bar-title" id="practiceBarTitle"></span>
+      <span class="practice-bar-arrow" aria-hidden="true">&rsaquo;</span>
+    </button>
 
     <main id="views">
 
       <!-- TODAY -->
-      <section class="view" id="view-today" data-view="today">
-        <div class="urge-card companion-intro-card hidden" id="companionIntroCard">
-          <p class="urge-card-title">When it gets hard, don't text them. Talk it through.</p>
-          <p class="companion-intro-sub">The Companion is honest, not soothing. 5 messages free.</p>
-          <button class="btn-primary" id="companionIntroBtn">Try the Companion</button>
-          <button class="link-btn" id="companionIntroDismiss">Not now</button>
-        </div>
+      <section class="view hidden" id="view-today" data-view="today">
+        <button class="back-btn" data-target="companion">&larr; Companion</button>
         <p class="eyebrow" id="techniqueLabel">Dichotomy of Control</p>
         <h1 class="reframe-title" id="reframeTitle">Loading…</h1>
         <p class="reframe-lesson" id="reframeLesson"></p>
@@ -88,6 +92,7 @@
 
       <!-- TRACKER -->
       <section class="view hidden" id="view-tracker" data-view="tracker">
+        <button class="back-btn" data-target="companion">&larr; Companion</button>
         <p class="eyebrow">No-contact</p>
         <div class="streak-block">
           <span class="streak-number" id="streakNumber">0</span>
@@ -171,6 +176,7 @@
 
       <!-- JOURNAL -->
       <section class="view hidden" id="view-journal" data-view="journal">
+        <button class="back-btn" data-target="companion">&larr; Companion</button>
         <p class="eyebrow">Journal</p>
         <button class="btn-ghost" id="toggleHistoryBtn">Read past entries</button>
         <div class="history-panel hidden" id="historyPanel">
@@ -230,6 +236,7 @@
 
       <!-- RIGHT NOW -->
       <section class="view hidden" id="view-rightnow" data-view="rightnow">
+        <button class="back-btn" data-target="companion">&larr; Companion</button>
         <p class="eyebrow">Right now</p>
         <p class="rightnow-intro">Tap what you're feeling. Get something short and specific, not a breathing exercise.</p>
 
@@ -282,8 +289,7 @@
       </section>
 
       <!-- COMPANION -->
-      <section class="view hidden" id="view-companion" data-view="companion">
-        <p class="eyebrow">Companion</p>
+      <section class="view" id="view-companion" data-view="companion">
         <div class="chat-log" id="chatLog">
           <div class="chat-bubble bot">You're here, so something's going on. Did they reach out, or are you about to?</div>
         </div>
@@ -301,6 +307,7 @@
 
       <!-- PAYWALL -->
       <section class="view hidden" id="view-paywall" data-view="paywall">
+        <button class="back-btn" data-target="companion">&larr; Companion</button>
         <p class="eyebrow">Companion</p>
         <h1 class="reframe-title">Unlock the Companion</h1>
         <p class="reframe-lesson">Someone to talk to, grounded in the same Stoic voice as the rest of the app — available whenever you need it, day or night.</p>
@@ -316,13 +323,47 @@
 
     </main>
 
-    <nav class="tabbar">
-      <button class="tab active" data-target="today">Today</button>
-      <button class="tab" data-target="tracker">Tracker</button>
-      <button class="tab tab-companion" data-target="companion">Companion</button>
-      <button class="tab" data-target="rightnow">Right Now</button>
-      <button class="tab" data-target="journal">Journal</button>
-    </nav>
+    <!-- MENU (replaces the tab bar) -->
+    <div class="drawer-backdrop hidden" id="drawerBackdrop"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer-wordmark">So Be It</div>
+      <button class="drawer-streak" data-target="tracker">
+        <span class="drawer-eyebrow">No contact</span>
+        <span class="drawer-streak-row"><span class="drawer-streak-num" id="drawerStreakNum">0</span><span class="drawer-streak-sub" id="drawerStreakSub">days</span></span>
+        <span class="drawer-progress"><span class="drawer-progress-fill" id="drawerProgress"></span></span>
+      </button>
+      <nav class="drawer-nav">
+        <button class="drawer-item active" data-target="companion">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Companion</button>
+        <button class="drawer-item" data-target="journal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 3h10l3 3v15H6z"/><path d="M9 10h7M9 14h7"/></svg>Journal</button>
+        <button class="drawer-item" data-target="tracker">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Tracker &amp; urges</button>
+        <button class="drawer-item" data-target="rightnow">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Right Now</button>
+        <button class="drawer-item" data-target="today">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M9 4v16"/></svg>Today's lesson</button>
+      </nav>
+      <div class="drawer-foot">
+        <a class="drawer-link" href="https://findahelpline.com" target="_blank" rel="noopener" id="drawerCrisis">Need help now? Crisis lines</a>
+        <a class="drawer-link" href="https://temujin-67.github.io/Unbroken/privacy.html" target="_blank" rel="noopener">Privacy</a>
+      </div>
+    </aside>
+
+    <!-- JOURNAL SHEET (opened from the chat) -->
+    <div class="sheet-backdrop hidden" id="sheetBackdrop"></div>
+    <div class="sheet hidden" id="journalSheet" role="dialog" aria-labelledby="sheetTitle">
+      <div class="sheet-handle"></div>
+      <p class="sheet-eyebrow">Journal</p>
+      <p class="sheet-title" id="sheetTitle">Write it here.<br><span>Not to them.</span></p>
+      <p class="sheet-sub" id="sheetSub">Only you see this. Say everything you wanted to send.</p>
+      <textarea id="sheetText" class="sheet-text" placeholder="Write it out."></textarea>
+      <div class="sheet-actions">
+        <button class="btn-primary" id="sheetSaveBtn">Save it</button>
+        <button class="btn-ghost" id="sheetTalkBtn">Save &amp; talk about it</button>
+      </div>
+      <button class="link-btn" id="sheetCloseBtn">Close</button>
+    </div>
 
   </div>
 

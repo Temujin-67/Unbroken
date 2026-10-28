@@ -131,9 +131,59 @@
   var IOS_SALES_OFF = isNativeApp && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "ios" &&
     !(cfg && cfg.iosPurchasesEnabled === true);
 
-  // ---------- Free trial: 5 Companion messages in total, then the unlock screen ----------
+  // ---------- Free trial: N Companion messages in total (N comes from the app_config table) ----------
   var FREE_TRIAL_MESSAGES = 5;
+  try {
+    var cachedLimit = parseInt(localStorage.getItem("sobeit_free_limit") || "", 10);
+    if (cachedLimit > 0 && cachedLimit < 50) FREE_TRIAL_MESSAGES = cachedLimit;
+  } catch (e) {}
   var trialNoticeShown = false;
+
+  function hashString(str) {
+    var h = 0;
+    for (var i = 0; i < str.length; i++) { h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
+    return Math.abs(h);
+  }
+
+  // Reads the free-message limit from the server, so it can change without a new build.
+  // free_messages_test = "3,5" splits NEW users (no free message used yet) at random by device;
+  // anyone already in a group keeps it. Any failure keeps the last known value (or 5).
+  function applyAppConfig(map) {
+    var plat = platformName();
+    var key = "free_messages_" + (plat === "ios" ? "ios" : plat === "android" ? "android" : "web");
+    var n = parseInt(map[key], 10);
+    var test = String(map.free_messages_test || "off").replace(/\s/g, "");
+    if (/^\d+(,\d+)+$/.test(test)) {
+      var options = test.split(",").map(function (x) { return parseInt(x, 10); });
+      var variant = null;
+      try { variant = parseInt(localStorage.getItem("sobeit_free_variant") || "", 10); } catch (e) {}
+      if (!(options.indexOf(variant) !== -1)) {
+        variant = null;
+        if (freeMessagesUsed() === 0 && !hasCompanionAccess) {
+          variant = options[hashString(getDeviceId()) % options.length];
+          try { localStorage.setItem("sobeit_free_variant", String(variant)); } catch (e) {}
+          trackEvent("variant", "free_" + variant);
+        }
+      }
+      if (variant) n = variant;
+    }
+    if (n > 0 && n < 50) {
+      FREE_TRIAL_MESSAGES = n;
+      try { localStorage.setItem("sobeit_free_limit", String(n)); } catch (e) {}
+    }
+  }
+
+  function loadAppConfig() {
+    var c = window.UNBROKEN_CONFIG;
+    if (!c || !window.fetch) return Promise.resolve();
+    return fetch(c.supabaseUrl + "/rest/v1/app_config?select=key,value", { headers: { "apikey": c.supabasePublishableKey } })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (rows) {
+        var map = {};
+        (rows || []).forEach(function (row) { map[row.key] = row.value; });
+        applyAppConfig(map);
+      }).catch(function (e) { console.warn("[So Be It] config load failed:", e); });
+  }
   function freeMessagesUsed() {
     return parseInt(localStorage.getItem("unbroken_free_used") || "0", 10);
   }
@@ -298,7 +348,7 @@
 
   function renderToday() {
     var day = programDay();
-    document.getElementById("dayPill").textContent = day > 30 ? "Maintenance" : "Day " + day;
+    document.getElementById("dayPillText").textContent = day > 30 ? "Maintenance" : "Day " + day;
     var r = pickReframe(day);
     if (!r) return;
     document.getElementById("techniqueLabel").textContent = r.technique;
@@ -314,6 +364,8 @@
     } else {
       context.classList.add("hidden");
     }
+
+    renderPracticeBar(r);
 
     var doneBtn = document.getElementById("doneTodayBtn");
     if (state.doneDates.indexOf(todayKey) !== -1) {
@@ -395,7 +447,23 @@
     }
   }
 
+  function yesterdayKey() {
+    var d = new Date(todayKey + "T00:00:00Z");
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Urges logged per day (date -> count), so the greeting can say what happened yesterday.
+  function urgeDays() {
+    try { return JSON.parse(localStorage.getItem("sobeit_urge_days") || "{}") || {}; } catch (e) { return {}; }
+  }
+
   function logUrge(type) {
+    var days = urgeDays();
+    days[todayKey] = (days[todayKey] || 0) + 1;
+    var keys = Object.keys(days).sort();
+    while (keys.length > 60) { delete days[keys.shift()]; }
+    try { localStorage.setItem("sobeit_urge_days", JSON.stringify(days)); } catch (e) {}
     state.urgesCount += 1;
     state.totalUrges += 1;
     localStorage.setItem("unbroken_urges_count", String(state.urgesCount));
@@ -553,11 +621,7 @@
   });
 
   // ---------- Journal ----------
-  document.getElementById("saveJournalBtn").addEventListener("click", function () {
-    var text = document.getElementById("journalEntry").value.trim();
-    if (!text) return;
-    var prompt = document.getElementById("journalPrompt").textContent;
-
+  function saveJournalEntry(prompt, text) {
     var entries = JSON.parse(localStorage.getItem("unbroken_journal") || "[]");
     entries.push({ prompt: prompt, entry: text, created_at: new Date().toISOString() });
     localStorage.setItem("unbroken_journal", JSON.stringify(entries));
@@ -569,6 +633,13 @@
         if (res.error) console.warn("Journal sync failed:", res.error.message);
       });
     }
+  }
+
+  document.getElementById("saveJournalBtn").addEventListener("click", function () {
+    var text = document.getElementById("journalEntry").value.trim();
+    if (!text) return;
+    var prompt = document.getElementById("journalPrompt").textContent;
+    saveJournalEntry(prompt, text);
 
     document.getElementById("journalEntry").value = "";
     lastJournalText = text;
@@ -1029,7 +1100,12 @@
       div.appendChild(para);
     });
     log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
+    scrollChatToEnd();
+  }
+
+  function scrollChatToEnd() {
+    var scroller = document.getElementById("views");
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
   }
 
   function appendBubble(text, cls) {
@@ -1039,44 +1115,169 @@
     div.className = "chat-bubble " + cls;
     div.textContent = text;
     log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
+    scrollChatToEnd();
+    return div;
   }
 
-  // Shown in the chat once the free messages are used: the offer itself, with a button that opens
-  // the unlock screen directly (the person stays where they are; no hunting for the tab).
-  function appendUnlockOffer(reason) {
-    if (IOS_SALES_OFF) {
-      appendBubble("That was your last free Companion message. Unlimited Companion is coming soon on iPhone. Your journal, tracker and daily practice stay free.", "bot");
-      return;
-    }
+  // ---------- In-chat cards (offer, urge, journal, 60-second reset) ----------
+  function makeCard(cls, eyebrow, title, body) {
+    var div = document.createElement("div");
+    div.className = "chat-card " + (cls || "");
+    if (eyebrow) { var e = document.createElement("p"); e.className = "chat-card-eyebrow"; e.textContent = eyebrow; div.appendChild(e); }
+    if (title) { var t = document.createElement("p"); t.className = "chat-card-title"; t.textContent = title; div.appendChild(t); }
+    if (body) { var b = document.createElement("p"); b.className = "chat-card-body"; b.textContent = body; div.appendChild(b); }
+    return div;
+  }
+
+  function cardButton(card, label, primary, onClick) {
+    var btn = document.createElement("button");
+    btn.className = primary ? "btn-primary chat-card-btn" : "btn-ghost chat-card-btn";
+    btn.textContent = label;
+    btn.addEventListener("click", function () { onClick(btn); });
+    card.appendChild(btn);
+    return btn;
+  }
+
+  function cardLink(card, label, onClick) {
+    var btn = document.createElement("button");
+    btn.className = "link-btn chat-card-link";
+    btn.textContent = label;
+    btn.addEventListener("click", function () { onClick(btn); });
+    card.appendChild(btn);
+    return btn;
+  }
+
+  function addCard(card) {
     var log = document.getElementById("chatLog");
     if (!log) return;
-    var div = document.createElement("div");
-    div.className = "chat-bubble bot unlock-offer";
-    var p = document.createElement("p");
-    p.textContent = "That was your last free message. To keep talking, unlock the Companion: $9.99, one time, no subscription.";
-    var btn = document.createElement("button");
-    btn.className = "btn-primary unlock-offer-btn";
-    btn.textContent = "Unlock";
-    btn.addEventListener("click", function () {
-      trackEvent("offer_tap", reason);
-      showView("companion");
+    log.appendChild(card);
+    scrollChatToEnd();
+  }
+
+  var offerShownThisSession = false;
+
+  // Shown in the chat once the free messages are used: the offer itself, with a button that opens
+  // the unlock screen, and a way to keep going for free (the journal).
+  function appendUnlockOffer(reason) {
+    offerShownThisSession = true;
+    var card;
+    if (IOS_SALES_OFF) {
+      card = makeCard("offer", reason === "last_free" ? "That was your last free message" : "Your free messages are used", "Unlimited Companion is coming soon on iPhone.",
+        "Your journal, tracker and daily practice stay free.");
+    } else {
+      card = makeCard("offer", reason === "last_free" ? "That was your last free message" : "Your free messages are used", "Keep talking it through.",
+        "Unlock the Companion: $9.99, one time. No subscription. Your journal, tracker and daily practice stay free.");
+      cardButton(card, "Unlock", true, function () {
+        trackEvent("offer_tap", reason);
+        showView("paywall");
+      });
+    }
+    cardLink(card, "Write in the journal instead", function () {
+      trackEvent("card_tap", "offer:journal");
+      openJournalSheet("offer");
     });
-    div.appendChild(p);
-    div.appendChild(btn);
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
+    addCard(card);
     trackEvent("offer_shown", reason);
   }
+
+  // Cards the Companion asks for (server tags, only for this client). Same card at most once every 3 replies.
+  var lastCardShown = {};
+  var assistantReplies = 0;
+  function appendToolCard(kind) {
+    if (lastCardShown[kind] !== undefined && assistantReplies - lastCardShown[kind] < 3) return;
+    lastCardShown[kind] = assistantReplies;
+    var card;
+    if (kind === "URGE") {
+      card = makeCard("tool", "The urge", "Log it instead of acting on it.", "Or write the message here, where it stays and nothing sends.");
+      cardButton(card, "Log the urge", true, function (btn) {
+        logUrge("emotional");
+        trackEvent("card_tap", "urge:log");
+        btn.disabled = true;
+        btn.textContent = "Logged. " + state.urgesCount + " today.";
+      });
+      cardButton(card, "Write it here instead", false, function () {
+        trackEvent("card_tap", "urge:write");
+        openJournalSheet("urge_card");
+      });
+    } else if (kind === "JOURNAL") {
+      card = makeCard("tool", "Journal", "Put it on paper. Here, not to them.", "");
+      cardButton(card, "Open the journal", true, function () {
+        trackEvent("card_tap", "journal:open");
+        openJournalSheet("journal_card");
+      });
+    } else if (kind === "RESET") {
+      card = makeCard("tool", "60-second reset", "Phone down. Feet on the floor.", "Breathe out slower than you breathe in. Let the urge rise and fall without doing anything about it.");
+      cardButton(card, "Start 60 seconds", true, function (btn) {
+        if (btn.disabled) return;
+        trackEvent("card_tap", "reset:start");
+        btn.disabled = true;
+        var left = 60;
+        btn.textContent = "0:60";
+        var timer = setInterval(function () {
+          left -= 1;
+          btn.textContent = "0:" + (left < 10 ? "0" : "") + left;
+          if (left <= 0) {
+            clearInterval(timer);
+            btn.textContent = "60 seconds done";
+            trackEvent("card_tap", "reset:done");
+            var after = document.createElement("p");
+            after.className = "chat-card-body";
+            after.textContent = "If it's still strong, tell me what's left of it.";
+            card.appendChild(after);
+            scrollChatToEnd();
+          }
+        }, 1000);
+      });
+    } else {
+      return;
+    }
+    addCard(card);
+    trackEvent("card_shown", kind.toLowerCase());
+  }
+
+  // ---------- Journal sheet (write it here, not to them) ----------
+  var sheetSource = "";
+  var SHEET_PROMPT = "Write it here. Not to them.";
+  function openJournalSheet(source) {
+    sheetSource = source || "";
+    document.getElementById("sheetTalkBtn").classList.toggle("hidden", !canUseCompanion());
+    document.getElementById("sheetBackdrop").classList.remove("hidden");
+    document.getElementById("journalSheet").classList.remove("hidden");
+    trackEvent("screen", "journal_sheet");
+    setTimeout(function () { try { document.getElementById("sheetText").focus(); } catch (e) {} }, 50);
+  }
+  function closeJournalSheet() {
+    document.getElementById("sheetBackdrop").classList.add("hidden");
+    document.getElementById("journalSheet").classList.add("hidden");
+  }
+  function saveFromSheet(talk) {
+    var box = document.getElementById("sheetText");
+    var text = box.value.trim();
+    if (!text) { box.focus(); return; }
+    saveJournalEntry(SHEET_PROMPT, text);
+    trackEvent("journal_saved", sheetSource + (talk ? ":talk" : ""));
+    box.value = "";
+    closeJournalSheet();
+    if (talk && canUseCompanion()) {
+      document.getElementById("chatInput").value = "I just wrote this in my journal: \"" + text.slice(0, 500) + "\"";
+      sendChatMessage();
+    } else {
+      appendBubble("Saved in your journal. It stays here.", "bot note");
+    }
+  }
+  document.getElementById("sheetSaveBtn").addEventListener("click", function () { saveFromSheet(false); });
+  document.getElementById("sheetTalkBtn").addEventListener("click", function () { saveFromSheet(true); });
+  document.getElementById("sheetCloseBtn").addEventListener("click", closeJournalSheet);
+  document.getElementById("sheetBackdrop").addEventListener("click", closeJournalSheet);
 
   // Free messages used up: never pull the person out of the chat. A small server-side check
   // decides whether the message shows any risk (typos and indirect wording included).
   // Risk -> crisis message + safety window (they can keep talking). Otherwise, or if the
   // check fails -> a reply that still includes crisis help and how to unlock.
-  var LOCKED_MESSAGE = "You've used your 5 free Companion messages. If you're struggling right now, contact your local emergency number or find a crisis line at findahelpline.com. " +
-    (IOS_SALES_OFF
-      ? "Unlimited Companion is coming soon on iPhone. Your journal, tracker and daily practice stay free."
-      : "");
+  function lockedMessage() {
+    return "You've used your " + FREE_TRIAL_MESSAGES + " free Companion messages. If you're struggling right now, contact your local emergency number or find a crisis line at findahelpline.com." +
+      (IOS_SALES_OFF ? " Unlimited Companion is coming soon on iPhone. Your journal, tracker and daily practice stay free." : "");
+  }
 
   function handleLockedMessage(text) {
     trackEvent("locked_msg", "");
@@ -1088,9 +1289,9 @@
     var placeholder = log.lastChild;
 
     function showLocked() {
-      placeholder.textContent = LOCKED_MESSAGE.trim();
+      placeholder.textContent = lockedMessage();
       placeholder.className = "chat-bubble bot";
-      if (!IOS_SALES_OFF) appendUnlockOffer("locked");
+      appendUnlockOffer("locked");
     }
 
     if (!currentAccessToken) { showLocked(); return; }
@@ -1185,13 +1386,15 @@
       body: JSON.stringify({
         messages: chatHistory,
         dynamicContext: buildDynamicContext(),
+        cards: true,
+        lastFree: onTrial && freeMessagesLeft() === 1,
         platform: isNativeApp ? (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "unknown") : "web"
       })
     }).then(function (r) { return r.json(); }).then(function (data) {
       if (data && data.errorCode === "subscription_required") {
         hasCompanionAccess = false;
         placeholder.remove();
-        showView("companion");
+        showView("paywall");
         showPaywallMessage("Your Companion access isn't active. Unlock it below to continue.");
         return;
       }
@@ -1210,6 +1413,8 @@
         if (stage === "SAFETY") activateSafetyWindow();
       }
 
+      reply = reply.replace(/\s*\[CARD:\s*[A-Z]+\s*\]\s*/gi, " ").trim();
+
       if (data.stop_reason === "max_tokens") {
         console.warn("[Unbroken] Response truncated by max_tokens — reply cut off mid-generation.");
         reply += " [cut off — ask again for the rest]";
@@ -1221,11 +1426,19 @@
       }
       placeholder.textContent = reply;
       placeholder.className = "chat-bubble bot";
+      scrollChatToEnd();
+
+      if (gotReply) {
+        assistantReplies += 1;
+        var cards = (data && Array.isArray(data.cards)) ? data.cards : [];
+        if (cards.length && !(stageMatch && stageMatch[1].toUpperCase() === "SAFETY")) appendToolCard(String(cards[0]).toUpperCase());
+      }
 
       if (onTrial && gotReply) {
         useFreeMessage();
         if (freeMessagesLeft() === 0) {
           appendUnlockOffer("last_free");
+          updateLockedInput();
         }
       }
     }).catch(function () {
@@ -1266,26 +1479,83 @@
     });
   });
 
-  // ---------- Tab navigation ----------
-  var tabs = document.querySelectorAll(".tab");
+  // ---------- Navigation: the Companion is home; everything else opens from the menu ----------
   var views = document.querySelectorAll(".view");
+  var navItems = document.querySelectorAll(".drawer-item[data-target]");
+  var currentView = "companion";
 
   function showView(name) {
-    var visibleName = (name === "companion" && !canUseCompanion()) ? "paywall" : name;
+    var visibleName = name;
+    currentView = name;
     views.forEach(function (v) {
       v.classList.toggle("hidden", v.dataset.view !== visibleName);
     });
-    tabs.forEach(function (t) {
+    navItems.forEach(function (t) {
       t.classList.toggle("active", t.dataset.target === name);
     });
-    if (visibleName === "paywall") { preparePaywall(); trackEvent("paywall_view", name); }
-    if (visibleName === "companion") { trackEvent("companion_view", ""); updateChatStarters(); setTimeout(autoGrowChatInput, 0); }
-    if (visibleName === "companion" && !hasCompanionAccess && !trialNoticeShown && freeMessagesLeft() > 0) {
-      trialNoticeShown = true;
-      var left = freeMessagesLeft();
-      appendBubble("You have " + left + " free message" + (left === 1 ? "" : "s") + " to try the Companion.", "bot");
-    }
+    closeDrawer();
+    var scroller = document.getElementById("views");
+    trackEvent("screen", visibleName);
+    if (visibleName === "paywall") { if (scroller) scroller.scrollTop = 0; preparePaywall(); trackEvent("paywall_view", name); }
+    if (visibleName === "companion") { trackEvent("companion_view", ""); updateChatStarters(); updateLockedInput(); setTimeout(function () { autoGrowChatInput(); scrollChatToEnd(); }, 0); }
+    else if (scroller) scroller.scrollTop = 0;
+    var bar = document.getElementById("practiceBar");
+    if (bar) bar.classList.toggle("hidden", visibleName !== "companion" || !practiceBarDue);
+    if (visibleName === "tracker") renderTracker();
   }
+
+  function updateLockedInput() {
+    var input = document.getElementById("chatInput");
+    if (!input) return;
+    input.placeholder = canUseCompanion() ? "Say what's happening\u2026" : "Unlock to keep talking";
+  }
+
+  // ---------- Menu drawer ----------
+  function openDrawer() {
+    var day = programDay();
+    var streak = computeStreak();
+    document.getElementById("drawerStreakNum").textContent = streak;
+    document.getElementById("drawerStreakSub").textContent = (streak === 1 ? "day" : "days") + " \u00b7 " + (day > 30 ? "Maintenance" : "Day " + day + " of 30");
+    document.getElementById("drawerProgress").style.width = Math.min(100, Math.round(Math.min(day, 30) / 30 * 100)) + "%";
+    document.getElementById("drawer").classList.add("open");
+    document.getElementById("drawer").setAttribute("aria-hidden", "false");
+    document.getElementById("drawerBackdrop").classList.remove("hidden");
+    document.getElementById("menuBtn").setAttribute("aria-expanded", "true");
+    trackEvent("menu_open", currentView);
+  }
+  function closeDrawer() {
+    var d = document.getElementById("drawer");
+    if (!d) return;
+    d.classList.remove("open");
+    d.setAttribute("aria-hidden", "true");
+    document.getElementById("drawerBackdrop").classList.add("hidden");
+    document.getElementById("menuBtn").setAttribute("aria-expanded", "false");
+  }
+  document.getElementById("menuBtn").addEventListener("click", openDrawer);
+  document.getElementById("drawerBackdrop").addEventListener("click", closeDrawer);
+  Array.prototype.forEach.call(document.querySelectorAll("[data-target]"), function (el) {
+    el.addEventListener("click", function () { showView(el.dataset.target); });
+  });
+  document.getElementById("dayPill").addEventListener("click", function () { trackEvent("card_tap", "daypill"); showView("today"); });
+  document.getElementById("drawerCrisis").addEventListener("click", function () { trackEvent("crisis_link", "menu"); });
+
+  // ---------- Today's practice bar (above the chat, until done for today) ----------
+  var practiceBarDue = false;
+  function renderPracticeBar(r) {
+    var bar = document.getElementById("practiceBar");
+    if (!bar) return;
+    var day = programDay();
+    // Not on the very first visit: a new person starts by talking, not by a lesson.
+    var talked = chatHistory.some(function (m) { return m.role === "user"; });
+    practiceBarDue = !!r && state.doneDates.indexOf(todayKey) === -1 && (talked || day > 1);
+    document.getElementById("practiceBarLabel").textContent = (day > 30 ? "Today" : "Day " + day) + " practice";
+    document.getElementById("practiceBarTitle").textContent = r ? r.title : "";
+    bar.classList.toggle("hidden", currentView !== "companion" || !practiceBarDue);
+  }
+  document.getElementById("practiceBar").addEventListener("click", function () {
+    trackEvent("card_tap", "practice_bar");
+    showView("today");
+  });
 
   // On iPhone, if Apple returns no product (e.g. agreement still pending), show "Coming soon"
   // instead of an error. Once the product loads, the normal Unlock button works with no update.
@@ -1341,12 +1611,6 @@
       paywallChecked = false;
     }
   }
-
-  tabs.forEach(function (t) {
-    t.addEventListener("click", function () {
-      showView(t.dataset.target);
-    });
-  });
 
   function showPaywallMessage(text) {
     var el = document.getElementById("paywallMessage");
@@ -1428,28 +1692,6 @@
     });
   });
 
-  // ---------- Companion intro card (Today, shown until used or dismissed) ----------
-  function renderCompanionIntro() {
-    var card = document.getElementById("companionIntroCard");
-    if (!card) return;
-    var dismissed = false;
-    try { dismissed = localStorage.getItem("sobeit_companion_intro_done") === "1"; } catch (e) {}
-    var used = hasCompanionAccess || freeMessagesUsed() > 0 || chatHistory.some(function (m) { return m.role === "user"; });
-    card.classList.toggle("hidden", dismissed || used);
-  }
-  function closeCompanionIntro() {
-    try { localStorage.setItem("sobeit_companion_intro_done", "1"); } catch (e) {}
-    document.getElementById("companionIntroCard").classList.add("hidden");
-  }
-  document.getElementById("companionIntroBtn").addEventListener("click", function () {
-    closeCompanionIntro();
-    openCompanionWith("", "intro_card");
-  });
-  document.getElementById("companionIntroDismiss").addEventListener("click", function () {
-    closeCompanionIntro();
-    trackEvent("intro_dismiss", "");
-  });
-
   // ---------- Open counter (works even if login fails) ----------
   var openLogged = false;
 
@@ -1526,22 +1768,86 @@
   }
   setTimeout(logAppOpen, 10000);
 
+  // ---------- Returning greeting: built only from what the app recorded, no AI, never invented ----------
+  function journalEntriesOn(dateKey) {
+    var n = 0;
+    ["unbroken_journal", "unbroken_recaps", "unbroken_reviews", "unbroken_line_entries", "unbroken_sort_entries"].forEach(function (k) {
+      try {
+        (JSON.parse(localStorage.getItem(k) || "[]") || []).forEach(function (e) {
+          if (e && typeof e.created_at === "string" && e.created_at.slice(0, 10) === dateKey) n += 1;
+        });
+      } catch (e) {}
+    });
+    try {
+      var notes = JSON.parse(localStorage.getItem("unbroken_today_notes") || "{}") || {};
+      if (notes[dateKey]) n += 1;
+    } catch (e) {}
+    return n;
+  }
+
+  function buildReturningGreeting() {
+    var day = programDay();
+    var streak = computeStreak();
+    var y = yesterdayKey();
+    var parts = [];
+    parts.push(day > 30 ? "Day " + day + "." : "Day " + day + " of 30.");
+    if (streak > 0) parts.push(streak + (streak === 1 ? " day" : " days") + " of no contact.");
+    var urgesY = urgeDays()[y] || 0;
+    if (urgesY > 0) {
+      var heldY = state.lastResetDate !== y && state.lastResetDate !== todayKey;
+      parts.push("Yesterday you logged " + urgesY + (urgesY === 1 ? " urge" : " urges") + (heldY ? " and the streak held." : "."));
+    }
+    if (journalEntriesOn(y) > 0) parts.push("You wrote in your journal yesterday.");
+    var r = pickReframe(day);
+    if (r && r.title && state.doneDates.indexOf(todayKey) === -1) parts.push("Today's practice: " + r.title + ".");
+    parts.push("What's on your mind today?");
+    return parts.join(" ");
+  }
+
+  // Runs once the chat history is on screen, so these lines always land at the end of the conversation.
+  function afterChatReady() {
+    var hasTalked = chatHistory.some(function (m) { return m.role === "user"; });
+    // Greets only on the first open of a new day (not on every reopen the same day).
+    var lastVisit = null;
+    try { lastVisit = localStorage.getItem("sobeit_last_visit"); localStorage.setItem("sobeit_last_visit", todayKey); } catch (e) {}
+    if (hasTalked && lastVisit !== todayKey) {
+      appendBubble(buildReturningGreeting(), "bot greeting");
+      trackEvent("greeting_shown", "day_" + programDay());
+    }
+    if (!hasCompanionAccess && !isSafetyActive()) {
+      var left = freeMessagesLeft();
+      if (left <= 0) {
+        if (hasTalked && !offerShownThisSession) appendUnlockOffer("reopen");
+      } else if (!trialNoticeShown) {
+        trialNoticeShown = true;
+        appendBubble(left === FREE_TRIAL_MESSAGES
+          ? "You have " + left + " free messages to try the Companion."
+          : left + " free message" + (left === 1 ? "" : "s") + " left.", "bot note");
+      }
+    }
+    updateLockedInput();
+    updateChatStarters();
+    scrollChatToEnd();
+  }
+
   // ---------- Boot ----------
+  if (document.getElementById("onboardOverlay").classList.contains("hidden")) showView("companion");
   ensureAuth().then(function (uid) {
     logAppOpen();
     return uid;
   }).then(function () {
-    return Promise.all([loadReframes(), loadRightNow(), loadMaintenance(), loadChatHistory(), initRevenueCat()]);
+    return Promise.all([loadAppConfig(), loadReframes(), loadRightNow(), loadMaintenance(), loadChatHistory(), initRevenueCat()]);
   }).then(function () {
     renderToday();
-    renderCompanionIntro();
     renderTracker();
     renderTriggers();
+    afterChatReady();
   }).catch(function (e) {
     console.warn("Boot sequence failed:", e);
     renderToday();
     renderTracker();
     renderTriggers();
+    afterChatReady();
   });
 
 })();
