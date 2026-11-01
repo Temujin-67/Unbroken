@@ -6,5 +6,5 @@ window.UNBROKEN_CONFIG = {
   revenueCatAndroidKey: "goog_nakJiAXiEzZvuFhcSMdWUJGMkZM",
   // iPhone purchases stay off until Apple's Paid Apps Agreement is active.
   // While false, iPhone shows "Coming soon" instead of the Unlock button. Set to true, push, and resubmit to turn sales on.
-  iosPurchasesEnabled: false
+  iosPurchasesEnabled: true
 };
