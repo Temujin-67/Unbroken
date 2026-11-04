@@ -1002,7 +1002,8 @@
   // labeled-as-data dynamic context are sent; the server builds the authoritative prompt.
 
   var CRISIS_PATTERN = /\b(suicid\w*|kill(ing)? myself|end(ing)? my life|take my (own )?life|self.?harm\w*|hurt(ing)? myself|want to die|wanna die|better off dead|no reason to (live|go on)|not worth living|can'?t go on|how (can|do) i go on|don'?t want to (live|be here|exist)|life (has|had) no (meaning|point)|give up on (life|living)|end it all|no point in )\b/i;
-  var CRISIS_MESSAGE = "That sounds like a lot to carry alone right now. Please reach out to a crisis line — you can find one for your country at findahelpline.com — or contact your local emergency number, or someone you trust, right now. I'll stay here with you, but this needs a real person today. Not eventually.";
+  // Nov 2026 (external safety review): never promise to stay; action first; no country assumed.
+  var CRISIS_MESSAGE = "I'm concerned about your safety right now. Please contact local emergency services or a crisis line (findahelpline.com lists them by country), and tell someone you trust what is happening. If you might act on these thoughts, move away from anything you could use to hurt yourself and get someone to stay with you. You can keep writing here, but this app can't replace help from a real person tonight.";
 
   var chatHistory = [];
 
