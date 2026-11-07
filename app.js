@@ -1412,6 +1412,12 @@
         var stage = stageMatch[1].toUpperCase();
         logCompanionStage(stage);
         if (stage === "SAFETY") activateSafetyWindow();
+        // The Companion has moved on from safety (e.g. "no, it's just the pain"): end the safety window so
+        // free messages count again. Real risk keeps getting SAFETY replies, which keep the window open.
+        else if (isSafetyActive()) {
+          localStorage.removeItem("unbroken_safety_active_until");
+          trackEvent("safety_end", stage.toLowerCase());
+        }
       }
 
       reply = reply.replace(/\s*\[CARD:\s*[A-Z]+\s*\]\s*/gi, " ").trim();
