@@ -1261,7 +1261,7 @@
     closeJournalSheet();
     if (talk && canUseCompanion()) {
       document.getElementById("chatInput").value = "I just wrote this in my journal: \"" + text.slice(0, 500) + "\"";
-      sendChatMessage();
+      sendChatMessage(true);
     } else {
       appendBubble("Saved in your journal. It stays here.", "bot note");
     }
@@ -1280,11 +1280,13 @@
       (IOS_SALES_OFF ? " Unlimited Companion is coming soon on iPhone. Your journal, tracker and daily practice stay free." : "");
   }
 
-  function handleLockedMessage(text) {
+  function handleLockedMessage(text, bubbleShown) {
     trackEvent("locked_msg", "");
     var input = document.getElementById("chatInput");
-    appendBubble(text, "user");
-    input.value = "";
+    if (!bubbleShown) {
+      appendBubble(text, "user");
+      input.value = "";
+    }
     appendBubble("\u2026", "bot");
     var log = document.getElementById("chatLog");
     var placeholder = log.lastChild;
@@ -1323,13 +1325,23 @@
     });
   }
 
-  function sendChatMessage() {
+  // Burst messages (build 106): people often type one thought as several quick messages. Each part shows at
+  // once, but they are sent to the Companion together after a short pause (and never while a reply is still
+  // coming), so a burst gets one reply and uses one free message. Quick-reply buttons and the journal go at once.
+  var BURST_WAIT_MS = 2500;
+  var pendingParts = [];
+  var pendingTimer = null;
+  var pendingPlaceholder = null;
+  var replyInFlight = false;
+
+  function sendChatMessage(opts) {
     var input = document.getElementById("chatInput");
     var text = input.value.trim();
     if (!text) return;
 
     var trialTestMode = /[?&]testmode=1\b/.test(window.location.search);
-    if (!hasCompanionAccess && !isSafetyActive() && !trialTestMode && !CRISIS_PATTERN.test(text) && freeMessagesLeft() <= 0) {
+    if (!pendingParts.length && !replyInFlight && !hasCompanionAccess && !isSafetyActive() && !trialTestMode &&
+        !CRISIS_PATTERN.test(text) && freeMessagesLeft() <= 0) {
       handleLockedMessage(text);
       return;
     }
@@ -1337,9 +1349,15 @@
     appendBubble(text, "user");
     input.value = "";
     autoGrowChatInput();
-    trackEvent("msg_sent", hasCompanionAccess ? "unlocked" : ("free_" + (freeMessagesUsed() + 1)));
+    var log = document.getElementById("chatLog");
 
     if (CRISIS_PATTERN.test(text)) {
+      // Crisis words go out at once, with anything still waiting folded in.
+      text = pendingParts.concat([text]).join("\n");
+      pendingParts = [];
+      if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; }
+      if (pendingPlaceholder) { pendingPlaceholder.remove(); pendingPlaceholder = null; }
+      trackEvent("msg_sent", hasCompanionAccess ? "unlocked" : ("free_" + (freeMessagesUsed() + 1)));
       activateSafetyWindow();
       saveChatMessage("user", text);
       chatHistory.push({ role: "user", content: text });
@@ -1349,11 +1367,51 @@
       return;
     }
 
+    pendingParts.push(text);
+    if (replyInFlight) {
+      // Wait for the reply; the parts go out together right after it.
+      return;
+    }
+    if (!pendingPlaceholder) {
+      showCompanionIntroOnce();
+      appendBubble("…", "bot");
+      pendingPlaceholder = log.lastChild;
+    } else {
+      log.appendChild(pendingPlaceholder); // keep the "…" under the newest part
+    }
+    if (pendingTimer) clearTimeout(pendingTimer);
+    pendingTimer = setTimeout(flushChatMessages, opts === true ? 0 : BURST_WAIT_MS);
+  }
+
+  function afterReply() {
+    replyInFlight = false;
+    if (pendingParts.length && !pendingTimer) pendingTimer = setTimeout(flushChatMessages, 800);
+  }
+
+  function flushChatMessages() {
+    pendingTimer = null;
+    if (!pendingParts.length || replyInFlight) return;
+    var text = pendingParts.join("\n");
+    pendingParts = [];
+    var log = document.getElementById("chatLog");
+    var placeholder = pendingPlaceholder;
+    pendingPlaceholder = null;
+
+    var trialTestMode = /[?&]testmode=1\b/.test(window.location.search);
+    if (!hasCompanionAccess && !isSafetyActive() && !trialTestMode && freeMessagesLeft() <= 0) {
+      if (placeholder) placeholder.remove();
+      handleLockedMessage(text, true);
+      return;
+    }
+
+    trackEvent("msg_sent", hasCompanionAccess ? "unlocked" : ("free_" + (freeMessagesUsed() + 1)));
+
     var inSafety = isSafetyActive();
     var testMode = /[?&]testmode=1\b/.test(window.location.search);
     var onTrial = !hasCompanionAccess && !inSafety && !testMode;
 
     if (!inSafety && !testMode && state.chatCount >= DAILY_CHAT_LIMIT) {
+      if (placeholder) placeholder.remove();
       appendBubble("You've reached today's Companion limit. Your journal, tools, and exercises are still available. The Companion resets tomorrow.", "bot");
       return;
     }
@@ -1368,15 +1426,18 @@
     updateChatStarters();
 
     if (!currentAccessToken) {
+      if (placeholder) placeholder.remove();
       appendBubble("The companion couldn't connect right now. Try again in a moment.", "bot");
       return;
     }
 
-    showCompanionIntroOnce();
-    appendBubble("…", "bot");
-    var log = document.getElementById("chatLog");
-    var placeholder = log.lastChild;
+    if (!placeholder) {
+      showCompanionIntroOnce();
+      appendBubble("…", "bot");
+      placeholder = log.lastChild;
+    }
 
+    replyInFlight = true;
     fetch(cfg.supabaseUrl + "/functions/v1/companion-chat", {
       method: "POST",
       headers: {
@@ -1451,7 +1512,7 @@
     }).catch(function () {
       placeholder.textContent = "Couldn't reach the Companion right now. Check your connection and try again.";
       placeholder.className = "chat-bubble bot";
-    });
+    }).then(afterReply);
   }
 
   var chatSendBtn = document.getElementById("chatSendBtn");
@@ -1482,7 +1543,7 @@
       var input = document.getElementById("chatInput");
       input.value = b.textContent;
       trackEvent("starter_tap", String(i + 1));
-      sendChatMessage();
+      sendChatMessage(true);
     });
   });
 
