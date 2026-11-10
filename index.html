@@ -5,9 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>So Be It</title>
 <script>
-  /* The app only runs inside the Android/iOS apps (served from localhost). The public website copy redirects to the store. */
+  /* The app only runs inside the Android/iOS apps (served from localhost). The public website copy redirects to the store (App Store on iPhone/iPad, Google Play otherwise). */
   if (location.hostname !== "localhost" && !/[?&]testmode=1/.test(location.search)) {
-    location.replace("https://play.google.com/store/apps/details?id=com.temujin67.unbroken");
+    var isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    location.replace(isApple ? "https://apps.apple.com/app/id6811519894"
+                             : "https://play.google.com/store/apps/details?id=com.temujin67.unbroken");
   }
 </script>
 <meta name="apple-mobile-web-app-capable" content="yes" />
