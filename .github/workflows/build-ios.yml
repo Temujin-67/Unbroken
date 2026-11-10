@@ -87,6 +87,7 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="Unbroken AppStore" \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            MARKETING_VERSION=1.0.1 \
             TARGETED_DEVICE_FAMILY=1 \
             archive
 
