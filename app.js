@@ -97,6 +97,38 @@
     });
   }
 
+  // Build 109: get a valid access token right before talking to the server. The token captured at startup
+  // expires after an hour, and on a slow start it may not exist yet; before this, both cases showed
+  // "couldn't connect" and the message was lost.
+  function getFreshToken() {
+    if (supabase) {
+      return supabase.auth.getSession().then(function (res) {
+        var s = res && res.data && res.data.session;
+        if (s) { currentUserId = s.user.id; currentAccessToken = s.access_token; return currentAccessToken; }
+        return ensureAuth().then(function () { return currentAccessToken; });
+      }).catch(function () {
+        return ensureAuth().then(function () { return currentAccessToken; });
+      });
+    }
+    return rawAnonymousAuth().then(function () { return currentAccessToken; });
+  }
+
+  // Force a new token (used once when the server says the token was rejected).
+  function refreshTokenHard() {
+    if (supabase) {
+      return supabase.auth.refreshSession().then(function (res) {
+        var s = res && res.data && res.data.session;
+        if (s) { currentUserId = s.user.id; currentAccessToken = s.access_token; return currentAccessToken; }
+        return ensureAuth().then(function () { return currentAccessToken; });
+      }).catch(function () { return currentAccessToken; });
+    }
+    try {
+      var sv = JSON.parse(localStorage.getItem("sobeit_raw_session") || "null");
+      if (sv) { sv.expires_at = 0; localStorage.setItem("sobeit_raw_session", JSON.stringify(sv)); }
+    } catch (e) {}
+    return rawAnonymousAuth().then(function () { return currentAccessToken; });
+  }
+
   // ---------- RevenueCat (Companion paywall) ----------
   // Only real inside a compiled native app — the Capacitor plugin does nothing in a plain
   // browser, so browser testing (like this GitHub Pages preview) always treats Companion as
@@ -1038,6 +1070,14 @@
     });
   }
 
+  function localTimeLabel() {
+    var d = new Date();
+    var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    var h = d.getHours(), m = d.getMinutes();
+    var part = h < 5 ? "night" : h < 12 ? "morning" : h < 17 ? "afternoon" : h < 22 ? "evening" : "night";
+    return days[d.getDay()] + " " + (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m + " (" + part + ")";
+  }
+
   function buildDynamicContext() {
     var journal = JSON.parse(localStorage.getItem("unbroken_journal") || "[]");
     var recaps = JSON.parse(localStorage.getItem("unbroken_recaps") || "[]");
@@ -1046,6 +1086,7 @@
     return [
       "Current state of this user in the app, for your awareness only — do not recite this list back to them,",
       "use it to respond as someone who already knows where they are, the way a coach who has seen their log would:",
+      "Their local time now: " + localTimeLabel() + ".",
       "Program day: " + programDay() + ".",
       "Current no-contact streak: " + computeStreak() + " days. Longest streak so far: " + state.longestStreak + " days.",
       "Times they have reset the streak: " + state.resetCount + ".",
@@ -1416,42 +1457,51 @@
       return;
     }
 
-    saveChatMessage("user", text);
-    if (!inSafety && !testMode) {
-      state.chatCount += 1;
-      localStorage.setItem("unbroken_chat_count", String(state.chatCount));
-    }
-
-    chatHistory.push({ role: "user", content: text });
-    updateChatStarters();
-
-    if (!currentAccessToken) {
-      if (placeholder) placeholder.remove();
-      appendBubble("The companion couldn't connect right now. Try again in a moment.", "bot");
-      return;
-    }
-
     if (!placeholder) {
       showCompanionIntroOnce();
-      appendBubble("…", "bot");
+      appendBubble("\u2026", "bot");
       placeholder = log.lastChild;
     }
 
+    function postCompanion(token) {
+      return fetch(cfg.supabaseUrl + "/functions/v1/companion-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token,
+          "apikey": cfg.supabasePublishableKey
+        },
+        body: JSON.stringify({
+          messages: chatHistory,
+          dynamicContext: buildDynamicContext(),
+          cards: true,
+          lastFree: onTrial && freeMessagesLeft() === 1,
+          platform: isNativeApp ? (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "unknown") : "web"
+        })
+      });
+    }
+
     replyInFlight = true;
-    fetch(cfg.supabaseUrl + "/functions/v1/companion-chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + (currentAccessToken || cfg.supabasePublishableKey),
-        "apikey": cfg.supabasePublishableKey
-      },
-      body: JSON.stringify({
-        messages: chatHistory,
-        dynamicContext: buildDynamicContext(),
-        cards: true,
-        lastFree: onTrial && freeMessagesLeft() === 1,
-        platform: isNativeApp ? (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : "unknown") : "web"
-      })
+    getFreshToken().then(function (token) {
+      if (!token) {
+        trackEvent("send_fail", "no_auth");
+        placeholder.textContent = "The companion couldn't connect right now. Try again in a moment.";
+        placeholder.className = "chat-bubble bot";
+        return;
+      }
+
+      saveChatMessage("user", text);
+      if (!inSafety && !testMode) {
+        state.chatCount += 1;
+        localStorage.setItem("unbroken_chat_count", String(state.chatCount));
+      }
+      chatHistory.push({ role: "user", content: text });
+      updateChatStarters();
+
+      return postCompanion(token).then(function (r) {
+        if (r.status !== 401) return r;
+        trackEvent("send_retry", "401");
+        return refreshTokenHard().then(function (t2) { return t2 ? postCompanion(t2) : r; });
     }).then(function (r) { return r.json(); }).then(function (data) {
       if (data && data.errorCode === "subscription_required") {
         hasCompanionAccess = false;
@@ -1510,7 +1560,12 @@
         }
       }
     }).catch(function () {
+      trackEvent("send_fail", "network");
       placeholder.textContent = "Couldn't reach the Companion right now. Check your connection and try again.";
+      placeholder.className = "chat-bubble bot";
+    });
+    }).catch(function () {
+      placeholder.textContent = "The companion couldn't connect right now. Try again in a moment.";
       placeholder.className = "chat-bubble bot";
     }).then(afterReply);
   }
@@ -1712,6 +1767,7 @@
           " | raw result: " + JSON.stringify(res) +
           " | products.length: " + products.length;
         console.warn("[Unbroken] No products returned:", diag3);
+        trackEvent("purchase_result", "no_products");
         showPaywallMessage("Couldn't load the purchase right now. Try again in a moment.");
         subscribeBtn.disabled = false;
         return null;
@@ -1723,9 +1779,11 @@
     }).then(function () {
       subscribeBtn.disabled = false;
       if (hasCompanionAccess) { trackEvent("purchase_done", ""); showView("companion"); }
+      else trackEvent("purchase_result", "not_active");
     }).catch(function (e) {
       subscribeBtn.disabled = false;
-      if (e && e.userCancelled) return;
+      if (e && e.userCancelled) { trackEvent("purchase_result", "cancelled"); return; }
+      trackEvent("purchase_result", ("error:" + ((e && (e.code || e.message)) || "unknown")).slice(0, 80));
       console.warn("[Unbroken] Purchase failed:", e);
       showPaywallMessage("Something went wrong with the purchase. Try again.");
     });
